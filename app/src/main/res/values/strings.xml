@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FreshCheck</string>
+    <string name="app_tagline">Smart Food Management &amp; Waste Reduction</string>
+
+    <!-- Navigation Tabs -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_inventory">Inventory</string>
+    <string name="nav_recipes">Recipes</string>
+    <string name="nav_shopping">Shopping</string>
+    <string name="nav_waste">Waste</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">FreshCheck Overview</string>
+    <string name="dashboard_welcome">Keep food fresh, save money, and cut waste.</string>
+    <string name="stat_total_items">Total Items</string>
+    <string name="stat_expiring_soon">Expiring Soon</string>
+    <string name="stat_expires_today">Expires Today</string>
+    <string name="stat_expired">Expired</string>
+    <string name="section_use_first">Use First Priority</string>
+    <string name="use_first_hint">Items that need attention within 3 days.</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="action_add_food">+ Add Food</string>
+    <string name="action_audit_inventory">Audit Inventory</string>
+    <string name="action_sync_cloud">Cloud Sync</string>
+    <string name="action_provider_demo">ContentProvider Demo</string>
+    <string name="empty_use_first">All caught up! No food items expiring in the next 3 days.</string>
+
+    <!-- Food Inventory -->
+    <string name="inventory_title">Food Inventory</string>
+    <string name="search_hint">Search food items...</string>
+    <string name="filter_all">All</string>
+    <string name="filter_fresh">Fresh</string>
+    <string name="filter_expiring">Expiring Soon</string>
+    <string name="filter_expired">Expired</string>
+    <string name="empty_inventory">No food items found. Tap + to add items to your pantry.</string>
+    <string name="confirm_delete_title">Delete Item</string>
+    <string name="confirm_delete_msg">Are you sure you want to remove this food item from your inventory?</string>
+
+    <!-- Add/Edit Food -->
+    <string name="title_add_food">Add Food Item</string>
+    <string name="title_edit_food">Edit Food Item</string>
+    <string name="label_food_name">Food Name *</string>
+    <string name="hint_food_name">e.g., Organic Milk, Fresh Spinach</string>
+    <string name="label_quantity">Quantity *</string>
+    <string name="label_unit">Unit</string>
+    <string name="label_category">Category</string>
+    <string name="label_location">Storage Location</string>
+    <string name="label_purchase_date">Purchase Date</string>
+    <string name="label_expiry_date">Expiry Date *</string>
+    <string name="label_estimated_cost">Estimated Cost ($)</string>
+    <string name="label_notes">Notes (Optional)</string>
+    <string name="btn_save">Save Item</string>
+    <string name="btn_update">Update Item</string>
+    <string name="error_required_fields">Please enter food name and expiry date.</string>
+
+    <!-- Expiry Statuses -->
+    <string name="status_fresh">Fresh</string>
+    <string name="status_expiring_soon">Expiring Soon</string>
+    <string name="status_expires_today">Expires Today</string>
+    <string name="status_expired">Expired</string>
+
+    <!-- Food Actions -->
+    <string name="action_mark_consumed">Mark as Consumed</string>
+    <string name="action_record_waste">Record as Wasted</string>
+    <string name="consumed_success">Yum! Item marked as consumed.</string>
+    <string name="wasted_recorded">Waste record created.</string>
+
+    <!-- Recipes -->
+    <string name="recipes_title">Recipe Suggestions</string>
+    <string name="recipes_subtitle">Recipes utilizing your available and expiring ingredients</string>
+    <string name="search_recipes">Search recipes (e.g. Pasta, Salad, Soup)...</string>
+    <string name="online_recipes_btn">Fetch Live Online Recipes</string>
+    <string name="loading_recipes">Loading smart recipe suggestions...</string>
+    <string name="empty_recipes">No recipes found matching these ingredients.</string>
+    <string name="recipe_ingredients">Ingredients</string>
+    <string name="recipe_instructions">Preparation Instructions</string>
+    <string name="recipe_share">Share Recipe</string>
+    <string name="recipe_watch_video">Search Video Tutorial</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_title">Shopping List</string>
+    <string name="add_shopping_hint">Add grocery item (e.g. 2 cartons Milk)...</string>
+    <string name="action_share_list">Share List</string>
+    <string name="action_clear_purchased">Clear Purchased</string>
+    <string name="empty_shopping">Your shopping list is empty. Add items you need to buy!</string>
+    <string name="move_to_inventory">Add to Inventory</string>
+    <string name="item_added_to_inventory">Item moved to inventory!</string>
+
+    <!-- Waste Tracking -->
+    <string name="waste_title">Food Waste Tracking</string>
+    <string name="waste_subtitle">Track wasted food to build better habits and save money</string>
+    <string name="stat_total_wasted">Total Wasted Items</string>
+    <string name="stat_total_loss">Total Financial Loss</string>
+    <string name="waste_by_reason_chart">Waste Breakdown by Reason</string>
+    <string name="btn_log_waste">+ Log Food Waste</string>
+    <string name="waste_history">Waste History Log</string>
+    <string name="empty_waste">Great job! No food waste has been recorded.</string>
+
+    <!-- Waste Dialog -->
+    <string name="dialog_log_waste_title">Record Food Waste</string>
+    <string name="waste_reason_prompt">Select Reason for Waste:</string>
+    <string name="reason_spoiled">Spoiled / Moldy</string>
+    <string name="reason_past_expiry">Past Expiry Date</string>
+    <string name="reason_overcooked">Overcooked / Burned</string>
+    <string name="reason_leftover">Uneaten Leftover</string>
+    <string name="reason_other">Other / Accidental</string>
+
+    <!-- Firebase Realtime Database -->
+    <string name="cloud_sync_title">Firebase Cloud Sync</string>
+    <string name="cloud_sync_desc">Synchronize your food inventory with Google Firebase Realtime Database for cross-device backup.</string>
+    <string name="btn_upload_cloud">Upload Inventory to Firebase</string>
+    <string name="btn_download_cloud">Download &amp; Merge from Firebase</string>
+    <string name="firebase_status_connected">Firebase Realtime Database: Ready</string>
+    <string name="firebase_status_offline">Firebase Offline / Local Persistence Active</string>
+    <string name="firebase_not_configured_msg">To enable live Firebase sync, place your google-services.json file in the app directory and configure your Firebase Database URL in FirebaseManager. Local database operations remain fully functional.</string>
+
+    <!-- ContentProvider & ContentResolver -->
+    <string name="provider_demo_title">ContentProvider &amp; Resolver</string>
+    <string name="provider_demo_desc">Demonstrates Android ContentProvider architecture. Accesses local food items through content://com.freshcheck.app.provider/food_items using standard ContentResolver APIs.</string>
+    <string name="btn_query_provider">Query via ContentResolver</string>
+    <string name="btn_insert_provider">Insert Item via ContentResolver</string>
+
+    <!-- Notifications & Background Service -->
+    <string name="notification_channel_name">FreshCheck Food Alerts</string>
+    <string name="notification_channel_desc">Alerts for food items expiring soon</string>
+    <string name="service_audit_started">Inventory audit service running in background...</string>
+    <string name="service_audit_completed">Inventory audit completed: %1$d item(s) expiring soon, %2$d item(s) expired.</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+</resources>

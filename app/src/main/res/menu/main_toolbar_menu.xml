@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_cloud_sync"
+        android:icon="@drawable/ic_cloud_sync"
+        android:title="@string/action_sync_cloud"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_audit_service"
+        android:icon="@drawable/ic_audit"
+        android:title="@string/action_audit_inventory"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_content_provider"
+        android:icon="@drawable/ic_database"
+        android:title="@string/action_provider_demo"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_about"
+        android:icon="@drawable/ic_info"
+        android:title="About &amp; Syllabus"
+        app:showAsAction="never" />
+</menu>

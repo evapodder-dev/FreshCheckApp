@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Primary Greens -->
+    <color name="primary">#2E7D32</color>
+    <color name="primary_dark">#1B5E20</color>
+    <color name="primary_light">#E8F5E9</color>
+    <color name="accent">#4CAF50</color>
+    <color name="accent_light">#C8E6C9</color>
+
+    <!-- Neutrals and Backgrounds -->
+    <color name="background">#F7FAF7</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F5F1</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_border">#E2E8E2</color>
+    <color name="divider">#E0E5E0</color>
+
+    <!-- Typography -->
+    <color name="text_primary">#1C261C</color>
+    <color name="text_secondary">#596659</color>
+    <color name="text_hint">#98A398</color>
+    <color name="text_on_primary">#FFFFFF</color>
+
+    <!-- Expiry Status Colors -->
+    <color name="status_fresh">#2E7D32</color>
+    <color name="status_fresh_bg">#E8F5E9</color>
+    <color name="status_fresh_border">#A5D6A7</color>
+
+    <color name="status_expiring">#EF6C00</color>
+    <color name="status_expiring_bg">#FFF3E0</color>
+    <color name="status_expiring_border">#FFCC80</color>
+
+    <color name="status_today">#D84315</color>
+    <color name="status_today_bg">#FBE9E7</color>
+    <color name="status_today_border">#FFAB91</color>
+
+    <color name="status_expired">#C62828</color>
+    <color name="status_expired_bg">#FFEBEE</color>
+    <color name="status_expired_border">#EF9A9A</color>
+
+    <!-- Dashboard & Charts -->
+    <color name="chart_fresh">#43A047</color>
+    <color name="chart_expiring">#FB8C00</color>
+    <color name="chart_today">#F4511E</color>
+    <color name="chart_expired">#E53935</color>
+    <color name="chart_consumed">#1E88E5</color>
+    <color name="chart_wasted">#8E24AA</color>
+
+    <!-- Waste Reasons -->
+    <color name="waste_spoiled">#E53935</color>
+    <color name="waste_expired">#FB8C00</color>
+    <color name="waste_overcooked">#8E24AA</color>
+    <color name="waste_leftover">#039BE5</color>
+    <color name="waste_other">#757575</color>
+</resources>

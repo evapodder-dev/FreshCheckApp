@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_food"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_food"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FreshCheck">
+
+        <!-- Main Launcher Activity -->
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Add / Edit Food Activity -->
+        <activity
+            android:name=".ui.activity.AddEditFoodActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Recipe Detail Activity -->
+        <activity
+            android:name=".ui.activity.RecipeDetailActivity"
+            android:exported="false" />
+
+        <!-- ContentProvider & Resolver Demo Activity -->
+        <activity
+            android:name=".ui.activity.ProviderDemoActivity"
+            android:exported="false" />
+
+        <!-- Firebase Cloud Sync Activity -->
+        <activity
+            android:name=".ui.activity.CloudSyncActivity"
+            android:exported="false" />
+
+        <!-- Started Service: Inventory Expiry Audit -->
+        <service
+            android:name=".service.InventoryAuditService"
+            android:exported="false" />
+
+        <!-- BroadcastReceiver: Expiry Scheduled Alarms -->
+        <receiver
+            android:name=".receiver.ExpiryAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.freshcheck.app.ACTION_CHECK_EXPIRY" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver: Service Audit Completion -->
+        <receiver
+            android:name=".receiver.InventoryAuditReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.freshcheck.app.ACTION_INVENTORY_AUDIT_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver: Boot Completed for WorkManager/Alarm rescheduling -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Custom ContentProvider exposing local inventory -->
+        <provider
+            android:name=".provider.FoodContentProvider"
+            android:authorities="com.freshcheck.app.provider"
+            android:exported="true" />
+
+    </application>
+
+</manifest>
