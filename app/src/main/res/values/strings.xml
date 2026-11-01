@@ -106,14 +106,38 @@
     <string name="reason_leftover">Uneaten Leftover</string>
     <string name="reason_other">Other / Accidental</string>
 
-    <!-- Firebase Realtime Database -->
-    <string name="cloud_sync_title">Firebase Cloud Sync</string>
-    <string name="cloud_sync_desc">Synchronize your food inventory with Google Firebase Realtime Database for cross-device backup.</string>
+    <!-- Firebase Realtime Database & Cloud Firestore -->
+    <string name="cloud_sync_title">Firebase Cloud &amp; Sync Center</string>
+    <string name="cloud_sync_desc">Synchronize your food inventory with Google Firebase Realtime Database and Cloud Firestore for cross-device backup.</string>
     <string name="btn_upload_cloud">Upload Inventory to Firebase</string>
     <string name="btn_download_cloud">Download &amp; Merge from Firebase</string>
     <string name="firebase_status_connected">Firebase Realtime Database: Ready</string>
     <string name="firebase_status_offline">Firebase Offline / Local Persistence Active</string>
     <string name="firebase_not_configured_msg">To enable live Firebase sync, place your google-services.json file in the app directory and configure your Firebase Database URL in FirebaseManager. Local database operations remain fully functional.</string>
+
+    <!-- Firebase Authentication & Cloud Services -->
+    <string name="title_auth">Firebase Account &amp; Auth</string>
+    <string name="auth_subtitle">Sign in to securely sync your inventory across devices with Firebase Cloud and Realtime Database.</string>
+    <string name="btn_sign_in_google">Sign in with Google</string>
+    <string name="btn_sign_in_facebook">Sign in with Facebook</string>
+    <string name="btn_sign_in_github">Sign in with GitHub</string>
+    <string name="btn_sign_in_guest">Continue as Guest (Anonymous)</string>
+    <string name="btn_sign_out">Sign Out</string>
+    <string name="label_account_status">Account Status</string>
+    <string name="status_signed_in">Signed In</string>
+    <string name="status_not_signed_in">Not Signed In</string>
+    <string name="label_user_id">User ID (UID):</string>
+    <string name="label_provider">Auth Provider:</string>
+    <string name="action_auth">Account &amp; Login</string>
+    <string name="cloud_firestore_title">Cloud Firestore</string>
+    <string name="btn_upload_firestore">Upload to Cloud Firestore</string>
+    <string name="btn_download_firestore">Download from Cloud Firestore</string>
+    <string name="realtime_db_title">Firebase Realtime Database</string>
+    <string name="btn_upload_rtdb">Upload to Realtime DB</string>
+    <string name="btn_download_rtdb">Download from Realtime DB</string>
+    <string name="btn_sync_all_cloud">Sync All Cloud Databases</string>
+    <string name="sign_out_confirm_title">Sign Out</string>
+    <string name="sign_out_confirm_msg">Are you sure you want to sign out from your FreshCheck account?</string>
 
     <!-- ContentProvider & ContentResolver -->
     <string name="provider_demo_title">ContentProvider &amp; Resolver</string>

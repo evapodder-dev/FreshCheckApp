@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark mode colors -->
+    <color name="primary">#81C784</color>
+    <color name="primary_dark">#4CAF50</color>
+    <color name="primary_light">#E8F5E9</color>
+    <color name="accent">#66BB6A</color>
+    <color name="accent_light">#C8E6C9</color>
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="surface_variant">#2C2C2C</color>
+    <color name="card_background">#1E1E1E</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#CCCCCC</color>
+    <color name="text_hint">#AAAAAA</color>
+    <color name="text_on_primary">#000000</color>
+    <!-- Keep other status colors same or adjust if needed -->
+    <color name="status_fresh">#81C784</color>
+    <color name="status_fresh_bg">#2E7D32</color>
+    <color name="status_fresh_border">#66BB6A</color>
+    <color name="status_expiring">#FFB74D</color>
+    <color name="status_expiring_bg">#EF6C00</color>
+    <color name="status_expiring_border">#FFCC80</color>
+    <color name="status_today">#FF8A80</color>
+    <color name="status_today_bg">#B71C1C</color>
+    <color name="status_today_border">#FFAB91</color>
+    <color name="status_expired">#EF5350</color>
+    <color name="status_expired_bg">#C62828</color>
+    <color name="status_expired_border">#EF9A9A</color>
+</resources>

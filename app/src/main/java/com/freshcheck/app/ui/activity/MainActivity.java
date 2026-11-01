@@ -151,7 +151,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_cloud_sync) {
+        if (id == R.id.action_auth) {
+            Intent intent = new Intent(this, AuthActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_cloud_sync) {
             Intent intent = new Intent(this, CloudSyncActivity.class);
             startActivity(intent);
             return true;

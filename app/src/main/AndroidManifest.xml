@@ -48,6 +48,11 @@
             android:name=".ui.activity.CloudSyncActivity"
             android:exported="false" />
 
+        <!-- Firebase Authentication Activity -->
+        <activity
+            android:name=".ui.activity.AuthActivity"
+            android:exported="false" />
+
         <!-- Started Service: Inventory Expiry Audit -->
         <service
             android:name=".service.InventoryAuditService"

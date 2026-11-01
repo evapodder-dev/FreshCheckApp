@@ -56,8 +56,18 @@ The project incorporates all foundational and advanced Android syllabus requirem
 * **Custom Canvas View (`WasteBreakdownChartView`)**: Custom-painted bar chart visualizing financial loss and percentage breakdown by waste reason.
 * Cumulative statistics tracking total wasted items and total financial loss.
 
-### 9. Firebase Realtime Database Cloud Sync
-* **Offline-First Architecture**: Works offline seamlessly using SQLite local storage.
+### 9. Firebase Realtime Database & Cloud Firestore Multi-Cloud Sync
+* **Dual Database Support**: Full synchronization with both **Firebase Realtime Database** and **Cloud Firestore**.
+* **User-Scoped Cloud Storage**: Automatically scopes inventory per authenticated user (`/users/{uid}/inventory`).
+* **Offline-First Resilience**: Works offline seamlessly using SQLite local storage when not connected to the cloud.
+
+### 10. Firebase Authentication & Social Sign-In
+* **Google Sign-In**: One-tap sign in using Google Play Services OAuth credential flow.
+* **Facebook OAuth Sign-In**: Seamless authentication with Facebook account.
+* **GitHub OAuth Sign-In**: Developer-friendly authentication with GitHub OAuth.
+* **Guest / Anonymous Sign-In**: Instant trial without requiring social accounts.
+* **Sign Out Option**: Clean session logout and credential revocation anytime.
+* **Dedicated Account Screen (`AuthActivity`)**: User profile badge, provider icon, display name, email, UID, and session management.
 * Cloud sync for uploading and downloading inventory to `/inventory`.
 * Full setup instructions provided in `FIREBASE_SETUP.md`.
 

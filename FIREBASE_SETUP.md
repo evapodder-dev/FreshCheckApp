@@ -1,93 +1,92 @@
-# Firebase Realtime Database Setup Guide for FreshCheck
+# FreshCheck Firebase & Authentication Setup Guide
 
-FreshCheck is designed with an **offline-first architecture**. All core features (dashboard freshness health, inventory management, expiry notifications, recipe suggestions, shopping list, and waste tracking) run 100% locally out of the box using SQLite and WorkManager.
-
-To enable **cloud synchronization** across devices using Firebase Realtime Database, follow the simple steps below.
-
----
-
-## 1. Create a Firebase Project
-
-1. Navigate to the [Firebase Console](https://console.firebase.google.com/).
-2. Click **Add project** (or create a project) and name it (e.g., `FreshCheck`).
-3. Google Analytics is optional; choose your preference and click **Create project**.
+FreshCheck contains an enterprise-grade **offline-first cloud architecture**:
+1. **Firebase Authentication**: Sign in with **Google**, **Facebook**, **GitHub**, and **Guest / Anonymous**, plus seamless **Sign Out**.
+2. **Firebase Realtime Database**: High-speed live tree synchronization for real-time pantry inventory.
+3. **Cloud Firestore**: Document-based cloud database for scalable queries and multi-device backups.
+4. **Offline Resilience**: When offline or before configuring credentials, the app operates 100% locally with SQLite, with demo authentication and persistent local state.
 
 ---
 
-## 2. Register Android Application
+## 1. Firebase Authentication Setup
 
-1. In your Firebase Project Overview, click the **Android** icon (`+ Add app`).
-2. Enter the exact package name:
-   ```
-   com.freshcheck.app
-   ```
-3. Enter an optional App nickname (e.g., `FreshCheck Android`).
-4. Click **Register app**.
-
----
-
-## 3. Download and Place `google-services.json`
-
-1. Download the generated `google-services.json` configuration file from Firebase.
-2. Copy this file into your project's `app/` directory:
-   ```
-   FreshCheckApp/app/google-services.json
-   ```
-   *(Note: A template file is already located in `app/google-services.json` for reference).*
-
----
-
-## 4. Enable Google Services Gradle Plugin (Optional / Standard)
-
-If you wish to apply the Google Services Gradle plugin:
-1. In `FreshCheckApp/build.gradle`, add:
-   ```groovy
-   plugins {
-       id 'com.android.application' version '9.4.1' apply false
-       id 'com.google.gms.google-services' version '4.4.2' apply false
-   }
-   ```
-2. In `FreshCheckApp/app/build.gradle`, add to plugins block:
-   ```groovy
-   plugins {
-       id 'com.android.application'
-       id 'com.google.gms.google-services'
-   }
-   ```
+### A. Enable Sign-In Providers in Firebase Console
+1. Go to [Firebase Console](https://console.firebase.google.com/) -> Select your project -> **Authentication** -> **Sign-in method**.
+2. **Google**:
+   - Enable **Google**.
+   - Select your project support email and save.
+   - For Android Google Sign-In, add your debug SHA-1 fingerprint (found by running `./gradlew signingReport`) in Project Settings -> Your Android App.
+3. **Facebook**:
+   - Enable **Facebook**.
+   - Enter your Facebook App ID and App Secret from the [Meta for Developers Portal](https://developers.facebook.com/).
+   - Copy the OAuth redirect URI from Firebase and paste it into Facebook Login settings.
+4. **GitHub**:
+   - Enable **GitHub**.
+   - Create an OAuth App on [GitHub Developer Settings](https://github.com/settings/developers).
+   - Enter your GitHub Client ID and Client Secret in Firebase.
+   - Set the Authorization callback URL to the URL provided by Firebase.
+5. **Anonymous / Guest**:
+   - Enable **Anonymous** for instant 1-tap testing without social credentials.
 
 ---
 
-## 5. Enable Firebase Realtime Database
+## 2. Firebase Realtime Database & Cloud Firestore Setup
 
-1. In the Firebase Console left menu, navigate to **Build** -> **Realtime Database**.
-2. Click **Create Database**.
-3. Choose your database location (e.g., `United States (us-central1)`).
-4. For security rules during development and academic evaluation, select **Start in test mode**:
-   ```json
-   {
-     "rules": {
-       ".read": true,
-       ".write": true
-     }
-   }
-   ```
-5. Click **Enable**.
+### A. Realtime Database
+1. In Firebase Console, go to **Build** -> **Realtime Database** -> **Create Database**.
+2. Select database location (e.g., `United States (us-central1)`).
+3. Set Security Rules:
+```json
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "inventory": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
+```
+
+### B. Cloud Firestore
+1. In Firebase Console, go to **Build** -> **Firestore Database** -> **Create Database**.
+2. Set Security Rules for development:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/inventory/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /inventory/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
 
 ---
 
-## 6. Test Cloud Sync in the App
-
-1. Open **FreshCheck** on your device or emulator.
-2. Tap the **Cloud Sync** icon in the top toolbar or the button on the Home Dashboard.
-3. Tap **Upload Inventory to Firebase** — your local items will upload to the `/inventory` node.
-4. You can immediately see the live records in your Firebase Console under the **Data** tab!
-5. To test restoration or sync on another device, tap **Download & Merge from Firebase**.
+## 3. Place `google-services.json`
+1. Download `google-services.json` from Firebase Project Settings.
+2. Put it in `FreshCheckApp/app/google-services.json`.
 
 ---
 
-## Offline Behavior & Graceful Fallback
+## 4. How to Test in the FreshCheck App
 
-If Firebase is not configured or the device is offline:
-- The app detects offline state and displays a status card: `"Firebase Offline / Local Persistence Active"`.
-- Core features remain 100% operational with SQLite local database.
-- No crashes or ANRs occur.
+1. Launch **FreshCheck** on your device or emulator.
+2. Tap the **Account** icon (`ic_account`) in the top toolbar or the **Cloud Sync** button on the Dashboard.
+3. In **Firebase Account & Auth**:
+   - Tap **Sign in with Google**, **Facebook**, **GitHub**, or **Continue as Guest**.
+   - Your profile details (Name, Email, UID, Provider) appear instantly in the Profile Card.
+   - Tap **Sign Out** anytime to cleanly log out of the session.
+4. In **Cloud Sync Center**:
+   - Tap **Upload to Realtime DB** or **Download from Realtime DB**.
+   - Tap **Upload to Cloud Firestore** or **Download from Cloud Firestore**.
+   - Or tap **Sync All Cloud Databases** to synchronize across both Firebase databases simultaneously!

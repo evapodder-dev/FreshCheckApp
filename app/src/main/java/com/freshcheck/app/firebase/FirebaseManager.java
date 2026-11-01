@@ -9,27 +9,39 @@ import androidx.annotation.NonNull;
 
 import com.freshcheck.app.database.FoodRepository;
 import com.freshcheck.app.model.FoodItem;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Handles Firebase Realtime Database cloud synchronization.
- * Supports offline-first architecture: if Firebase is not yet
- * configured with google-services.json, operations fail gracefully
- * with descriptive status messages without crashing the application.
+ * Handles dual Cloud Synchronization:
+ * 1. Firebase Realtime Database
+ * 2. Cloud Firestore
+ *
+ * Scopes data per authenticated user (UID) when signed in,
+ * with offline-first local SQLite fallback.
  */
 public class FirebaseManager {
     private static final String TAG = "FirebaseManager";
     private static final String NODE_INVENTORY = "inventory";
+    private static final String NODE_USERS = "users";
+
     private static FirebaseManager instance;
 
     public interface SyncCallback {
@@ -39,9 +51,10 @@ public class FirebaseManager {
     }
 
     private final Context context;
-    private FirebaseDatabase database;
-    private DatabaseReference inventoryRef;
-    private boolean isAvailable = false;
+    private FirebaseDatabase realtimeDatabase;
+    private FirebaseFirestore firestore;
+    private boolean isRealtimeReady = false;
+    private boolean isFirestoreReady = false;
     private final Handler mainHandler;
 
     private FirebaseManager(Context context) {
@@ -60,30 +73,90 @@ public class FirebaseManager {
     private void initFirebase() {
         try {
             if (!FirebaseApp.getApps(context).isEmpty()) {
-                database = FirebaseDatabase.getInstance();
-                database.setPersistenceEnabled(true);
-                inventoryRef = database.getReference(NODE_INVENTORY);
-                isAvailable = true;
-                Log.d(TAG, "Firebase Realtime Database initialized successfully");
+                // Initialize Realtime Database
+                try {
+                    realtimeDatabase = FirebaseDatabase.getInstance();
+                    realtimeDatabase.setPersistenceEnabled(true);
+                    isRealtimeReady = true;
+                    Log.d(TAG, "Firebase Realtime Database initialized");
+                } catch (Exception e) {
+                    Log.w(TAG, "Realtime DB init warning: " + e.getMessage());
+                    isRealtimeReady = (realtimeDatabase != null);
+                }
+
+                // Initialize Cloud Firestore
+                try {
+                    firestore = FirebaseFirestore.getInstance();
+                    isFirestoreReady = true;
+                    Log.d(TAG, "Cloud Firestore initialized");
+                } catch (Exception e) {
+                    Log.w(TAG, "Cloud Firestore init warning: " + e.getMessage());
+                    isFirestoreReady = false;
+                }
             } else {
                 Log.i(TAG, "FirebaseApp not initialized. Operating in local-only offline mode.");
-                isAvailable = false;
+                isRealtimeReady = false;
+                isFirestoreReady = false;
             }
         } catch (Exception e) {
             Log.w(TAG, "Firebase initialization notice: " + e.getMessage());
-            isAvailable = false;
+            isRealtimeReady = false;
+            isFirestoreReady = false;
         }
     }
 
     public boolean isConfigured() {
-        return isAvailable && inventoryRef != null;
+        return isRealtimeReady || isFirestoreReady;
     }
 
-    public void uploadInventory(final List<FoodItem> items, final SyncCallback callback) {
-        if (callback != null) callback.onProgress("Checking Firebase connection...");
+    public boolean isRealtimeDatabaseAvailable() {
+        return isRealtimeReady && realtimeDatabase != null;
+    }
 
-        if (!isConfigured()) {
-            postError(callback, "Firebase is in Local / Offline mode. Add google-services.json to your project to enable live cloud sync.");
+    public boolean isFirestoreAvailable() {
+        return isFirestoreReady && firestore != null;
+    }
+
+    private DatabaseReference getUserRealtimeRef() {
+        if (!isRealtimeDatabaseAvailable()) return null;
+        FirebaseAuthManager auth = FirebaseAuthManager.getInstance(context);
+        String uid = auth.getUserId();
+        if (auth.isUserLoggedIn() && uid != null && !uid.isEmpty()) {
+            return realtimeDatabase.getReference(NODE_USERS).child(uid).child(NODE_INVENTORY);
+        }
+        return realtimeDatabase.getReference(NODE_INVENTORY);
+    }
+
+    private CollectionReference getUserFirestoreCollection() {
+        if (!isFirestoreAvailable()) return null;
+        FirebaseAuthManager auth = FirebaseAuthManager.getInstance(context);
+        String uid = auth.getUserId();
+        if (auth.isUserLoggedIn() && uid != null && !uid.isEmpty()) {
+            return firestore.collection(NODE_USERS).document(uid).collection(NODE_INVENTORY);
+        }
+        return firestore.collection(NODE_INVENTORY);
+    }
+
+    // Default upload delegates to Realtime Database
+    public void uploadInventory(final List<FoodItem> items, final SyncCallback callback) {
+        uploadToRealtimeDatabase(items, callback);
+    }
+
+    // Default download delegates to Realtime Database
+    public void downloadInventory(final SyncCallback callback) {
+        downloadFromRealtimeDatabase(callback);
+    }
+
+    // ==========================================
+    // 1. FIREBASE REALTIME DATABASE METHODS
+    // ==========================================
+
+    public void uploadToRealtimeDatabase(final List<FoodItem> items, final SyncCallback callback) {
+        if (callback != null) callback.onProgress("Connecting to Firebase Realtime Database...");
+
+        final DatabaseReference ref = getUserRealtimeRef();
+        if (ref == null) {
+            postError(callback, "Realtime Database is in Offline / Local mode. Configure google-services.json to sync live.");
             return;
         }
 
@@ -92,48 +165,48 @@ public class FirebaseManager {
             return;
         }
 
-        if (callback != null) callback.onProgress("Uploading " + items.size() + " items to Firebase...");
+        if (callback != null) callback.onProgress("Uploading " + items.size() + " items to Realtime Database...");
 
         Map<String, Object> batchUpload = new HashMap<>();
         for (FoodItem item : items) {
             String key = item.getFirebaseId();
             if (key == null || key.isEmpty()) {
-                key = inventoryRef.push().getKey();
+                key = ref.push().getKey();
                 item.setFirebaseId(key);
             }
             batchUpload.put(key, item.toFirebaseMap());
         }
 
-        inventoryRef.updateChildren(batchUpload, new DatabaseReference.CompletionListener() {
+        ref.updateChildren(batchUpload, new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
                 if (databaseError != null) {
-                    postError(callback, "Upload failed: " + databaseError.getMessage());
+                    postError(callback, "Realtime DB upload failed: " + databaseError.getMessage());
                 } else {
-                    // Update local items with newly generated Firebase IDs
                     FoodRepository repo = new FoodRepository(context);
                     for (FoodItem item : items) {
                         repo.update(item);
                     }
-                    postSuccess(callback, "Successfully uploaded " + items.size() + " items to cloud.", items.size());
+                    postSuccess(callback, "Uploaded " + items.size() + " items to Realtime Database.", items.size());
                 }
             }
         });
     }
 
-    public void downloadInventory(final SyncCallback callback) {
+    public void downloadFromRealtimeDatabase(final SyncCallback callback) {
         if (callback != null) callback.onProgress("Connecting to Firebase Realtime Database...");
 
-        if (!isConfigured()) {
-            postError(callback, "Firebase is in Local / Offline mode. Add google-services.json to your project to enable cloud sync.");
+        final DatabaseReference ref = getUserRealtimeRef();
+        if (ref == null) {
+            postError(callback, "Realtime Database is in Offline / Local mode.");
             return;
         }
 
-        inventoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!snapshot.exists()) {
-                    postSuccess(callback, "No remote inventory found on Firebase.", 0);
+                    postSuccess(callback, "No remote inventory found on Realtime Database.", 0);
                     return;
                 }
 
@@ -170,16 +243,168 @@ public class FirebaseManager {
                         repo.insert(item);
                         count++;
                     } catch (Exception e) {
-                        Log.e(TAG, "Error parsing item snapshot: " + e.getMessage());
+                        Log.e(TAG, "Error parsing RTDB item: " + e.getMessage());
                     }
                 }
 
-                postSuccess(callback, "Downloaded and synced " + count + " items from Firebase.", count);
+                postSuccess(callback, "Downloaded " + count + " items from Realtime Database.", count);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                postError(callback, "Failed to download from cloud: " + error.getMessage());
+                postError(callback, "Failed to download from Realtime DB: " + error.getMessage());
+            }
+        });
+    }
+
+    // ==========================================
+    // 2. CLOUD FIRESTORE METHODS
+    // ==========================================
+
+    public void uploadToFirestore(final List<FoodItem> items, final SyncCallback callback) {
+        if (callback != null) callback.onProgress("Connecting to Cloud Firestore...");
+
+        final CollectionReference collection = getUserFirestoreCollection();
+        if (collection == null) {
+            postError(callback, "Cloud Firestore is in Offline / Local mode.");
+            return;
+        }
+
+        if (items == null || items.isEmpty()) {
+            postSuccess(callback, "Inventory is empty, nothing to upload.", 0);
+            return;
+        }
+
+        if (callback != null) callback.onProgress("Uploading " + items.size() + " items to Cloud Firestore...");
+
+        WriteBatch batch = firestore.batch();
+        for (FoodItem item : items) {
+            String docId = item.getFirebaseId();
+            if (docId == null || docId.isEmpty()) {
+                docId = collection.document().getId();
+                item.setFirebaseId(docId);
+            }
+            batch.set(collection.document(docId), item.toFirebaseMap());
+        }
+
+        batch.commit()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        FoodRepository repo = new FoodRepository(context);
+                        for (FoodItem item : items) {
+                            repo.update(item);
+                        }
+                        postSuccess(callback, "Uploaded " + items.size() + " items to Cloud Firestore.", items.size());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        postError(callback, "Cloud Firestore upload failed: " + e.getMessage());
+                    }
+                });
+    }
+
+    public void downloadFromFirestore(final SyncCallback callback) {
+        if (callback != null) callback.onProgress("Connecting to Cloud Firestore...");
+
+        final CollectionReference collection = getUserFirestoreCollection();
+        if (collection == null) {
+            postError(callback, "Cloud Firestore is in Offline / Local mode.");
+            return;
+        }
+
+        collection.get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot snapshots) {
+                        if (snapshots == null || snapshots.isEmpty()) {
+                            postSuccess(callback, "No remote inventory found on Cloud Firestore.", 0);
+                            return;
+                        }
+
+                        FoodRepository repo = new FoodRepository(context);
+                        int count = 0;
+
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            try {
+                                String key = doc.getId();
+                                String name = doc.getString("name");
+                                if (name == null) continue;
+
+                                Double qty = doc.getDouble("quantity");
+                                String unit = doc.getString("unit");
+                                String cat = doc.getString("category");
+                                String purchaseDate = doc.getString("purchaseDate");
+                                String expiryDate = doc.getString("expiryDate");
+                                String location = doc.getString("location");
+                                Double cost = doc.getDouble("estimatedCost");
+                                String notes = doc.getString("notes");
+
+                                FoodItem item = new FoodItem();
+                                item.setFirebaseId(key);
+                                item.setName(name);
+                                item.setQuantity(qty != null ? qty : 1.0);
+                                item.setUnit(unit != null ? unit : "items");
+                                item.setCategory(cat != null ? cat : "Other");
+                                item.setPurchaseDate(purchaseDate != null ? purchaseDate : "");
+                                item.setExpiryDate(expiryDate != null ? expiryDate : "");
+                                item.setLocation(location != null ? location : "Refrigerator");
+                                item.setEstimatedCost(cost != null ? cost : 0.0);
+                                item.setNotes(notes != null ? notes : "");
+
+                                repo.insert(item);
+                                count++;
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing Firestore doc: " + e.getMessage());
+                            }
+                        }
+
+                        postSuccess(callback, "Downloaded " + count + " items from Cloud Firestore.", count);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        postError(callback, "Failed to download from Cloud Firestore: " + e.getMessage());
+                    }
+                });
+    }
+
+    public void syncAll(final List<FoodItem> items, final SyncCallback callback) {
+        if (callback != null) callback.onProgress("Synchronizing with all Cloud Firebase services...");
+        uploadToRealtimeDatabase(items, new SyncCallback() {
+            @Override
+            public void onProgress(String message) {
+                if (callback != null) callback.onProgress(message);
+            }
+
+            @Override
+            public void onSuccess(String message, int itemsSynced) {
+                // Next sync to Firestore
+                uploadToFirestore(items, new SyncCallback() {
+                    @Override
+                    public void onProgress(String msg) {
+                        if (callback != null) callback.onProgress(msg);
+                    }
+
+                    @Override
+                    public void onSuccess(String msg, int count) {
+                        postSuccess(callback, "Synced " + count + " items to Realtime DB & Cloud Firestore!", count);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        postSuccess(callback, "Realtime DB synced, but Firestore had: " + error, itemsSynced);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                // Try Firestore even if Realtime DB had error
+                uploadToFirestore(items, callback);
             }
         });
     }
