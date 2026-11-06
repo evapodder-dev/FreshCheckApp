@@ -35,10 +35,11 @@ import com.freshcheck.app.ui.activity.MealPlannerActivity;
 import com.freshcheck.app.ui.adapter.UseFirstAdapter;
 import com.freshcheck.app.ui.custom.ExpiryStatusDonutView;
 import com.freshcheck.app.util.DateUtils;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.freshcheck.app.firebase.FirebaseAuthManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -149,97 +150,112 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
     }
 
     private void updateGreetingAndScope() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
-            tvGreeting.setText("Hello, " + user.getDisplayName());
-        } else if (user != null && user.getEmail() != null && !user.getEmail().isEmpty()) {
-            String name = user.getEmail().split("@")[0];
-            tvGreeting.setText("Hello, " + name);
-        } else {
+        try {
+            FirebaseAuthManager authManager = FirebaseAuthManager.getInstance(requireContext());
+            if (authManager.isUserLoggedIn()) {
+                String name = authManager.getUserDisplayName();
+                tvGreeting.setText("Hello, " + name);
+            } else {
+                tvGreeting.setText("Welcome to FreshCheck");
+            }
+        } catch (Exception e) {
             tvGreeting.setText("Welcome to FreshCheck");
         }
 
-        String activeScope = householdRepository.getActiveHouseholdName();
-        tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "Personal Pantry");
+        try {
+            String activeScope = householdRepository.getActiveHouseholdName();
+            tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "Personal Pantry");
+        } catch (Exception e) {
+            tvScopePill.setText("Personal Pantry");
+        }
     }
 
     public void loadDashboardData() {
-        Log.d(TAG, "Loading dashboard metrics and priority items...");
-        String activeHouseholdId = householdRepository.getActiveHouseholdId();
-        List<FoodItem> activeItems = foodRepository.getAllActive(activeHouseholdId);
+        try {
+            Log.d(TAG, "Loading dashboard metrics and priority items...");
+            String activeHouseholdId = householdRepository.getActiveHouseholdId();
+            List<FoodItem> activeItems = foodRepository.getAllActive(activeHouseholdId);
 
-        int total = activeItems.size();
-        int fresh = 0;
-        int expiringSoon = 0;
-        int expiresToday = 0;
-        int expired = 0;
+            int total = activeItems.size();
+            int fresh = 0;
+            int expiringSoon = 0;
+            int expiresToday = 0;
+            int expired = 0;
 
-        List<FoodItem> useFirstItems = new ArrayList<>();
+            List<FoodItem> useFirstItems = new ArrayList<>();
 
-        for (FoodItem item : activeItems) {
-            String status = item.getStatus();
-            if (CategoryConstants.STATUS_FRESH.equals(status)) {
-                fresh++;
-            } else if (CategoryConstants.STATUS_EXPIRING_SOON.equals(status)) {
-                expiringSoon++;
-                useFirstItems.add(item);
-            } else if (CategoryConstants.STATUS_EXPIRES_TODAY.equals(status)) {
-                expiresToday++;
-                useFirstItems.add(item);
-            } else if (CategoryConstants.STATUS_EXPIRED.equals(status)) {
-                expired++;
-                useFirstItems.add(item);
-            }
-        }
-
-        // Sort Use First by remaining days ascending
-        useFirstItems.sort((o1, o2) -> Long.compare(o1.getDaysRemaining(), o2.getDaysRemaining()));
-
-        // Update statistics cards
-        tvStatTotal.setText(String.valueOf(total));
-        tvStatExpiring.setText(String.valueOf(expiringSoon));
-        tvStatToday.setText(String.valueOf(expiresToday));
-        tvStatExpired.setText(String.valueOf(expired));
-
-        // Update Custom View Donut Chart
-        donutChartView.setData(fresh, expiringSoon + expiresToday, expired);
-
-        // Update Legends
-        tvLegendFresh.setText("Fresh: " + fresh);
-        tvLegendExpiring.setText("Expiring: " + (expiringSoon + expiresToday));
-        tvLegendExpired.setText("Expired: " + expired);
-
-        // Update Use First Priority list
-        useFirstAdapter.setItems(useFirstItems);
-        if (useFirstItems.isEmpty()) {
-            rvUseFirst.setVisibility(View.GONE);
-            tvEmptyUseFirst.setVisibility(View.VISIBLE);
-        } else {
-            rvUseFirst.setVisibility(View.VISIBLE);
-            tvEmptyUseFirst.setVisibility(View.GONE);
-        }
-
-        // Update Recently Added Section
-        List<FoodItem> recentlyAdded = foodRepository.getRecentlyAdded(3);
-        if (recentlyAdded.isEmpty()) {
-            tvRecentlyAddedList.setText("No food items added yet.\nTap '+ Add Food' or '📷 Scan' above to record your first item.");
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < recentlyAdded.size(); i++) {
-                FoodItem item = recentlyAdded.get(i);
-                sb.append("• ").append(item.getName())
-                        .append(" (").append(formatQuantity(item.getQuantity())).append(" ").append(item.getUnit()).append(")")
-                        .append(" — ").append(item.getStatus());
-                if (item.getDaysRemaining() >= 0) {
-                    sb.append(" (in ").append(item.getDaysRemaining()).append(" days)");
-                } else {
-                    sb.append(" (expired ").append(Math.abs(item.getDaysRemaining())).append(" days ago)");
-                }
-                if (i < recentlyAdded.size() - 1) {
-                    sb.append("\n");
+            for (FoodItem item : activeItems) {
+                String status = item.getStatus();
+                if (CategoryConstants.STATUS_FRESH.equals(status)) {
+                    fresh++;
+                } else if (CategoryConstants.STATUS_EXPIRING_SOON.equals(status)) {
+                    expiringSoon++;
+                    useFirstItems.add(item);
+                } else if (CategoryConstants.STATUS_EXPIRES_TODAY.equals(status)) {
+                    expiresToday++;
+                    useFirstItems.add(item);
+                } else if (CategoryConstants.STATUS_EXPIRED.equals(status)) {
+                    expired++;
+                    useFirstItems.add(item);
                 }
             }
-            tvRecentlyAddedList.setText(sb.toString());
+
+            // Sort Use First by remaining days ascending safely
+            Collections.sort(useFirstItems, new Comparator<FoodItem>() {
+                @Override
+                public int compare(FoodItem o1, FoodItem o2) {
+                    return Long.compare(o1.getDaysRemaining(), o2.getDaysRemaining());
+                }
+            });
+
+            // Update statistics cards
+            tvStatTotal.setText(String.valueOf(total));
+            tvStatExpiring.setText(String.valueOf(expiringSoon));
+            tvStatToday.setText(String.valueOf(expiresToday));
+            tvStatExpired.setText(String.valueOf(expired));
+
+            // Update Custom View Donut Chart
+            donutChartView.setData(fresh, expiringSoon + expiresToday, expired);
+
+            // Update Legends
+            tvLegendFresh.setText("Fresh: " + fresh);
+            tvLegendExpiring.setText("Expiring: " + (expiringSoon + expiresToday));
+            tvLegendExpired.setText("Expired: " + expired);
+
+            // Update Use First Priority list
+            useFirstAdapter.setItems(useFirstItems);
+            if (useFirstItems.isEmpty()) {
+                rvUseFirst.setVisibility(View.GONE);
+                tvEmptyUseFirst.setVisibility(View.VISIBLE);
+            } else {
+                rvUseFirst.setVisibility(View.VISIBLE);
+                tvEmptyUseFirst.setVisibility(View.GONE);
+            }
+
+            // Update Recently Added Section
+            List<FoodItem> recentlyAdded = foodRepository.getRecentlyAdded(3);
+            if (recentlyAdded.isEmpty()) {
+                tvRecentlyAddedList.setText("No food items added yet.\nTap '+ Add Food' or '📷 Scan' above to record your first item.");
+            } else {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < recentlyAdded.size(); i++) {
+                    FoodItem item = recentlyAdded.get(i);
+                    sb.append("• ").append(item.getName())
+                            .append(" (").append(formatQuantity(item.getQuantity())).append(" ").append(item.getUnit()).append(")")
+                            .append(" — ").append(item.getStatus());
+                    if (item.getDaysRemaining() >= 0) {
+                        sb.append(" (in ").append(item.getDaysRemaining()).append(" days)");
+                    } else {
+                        sb.append(" (expired ").append(Math.abs(item.getDaysRemaining())).append(" days ago)");
+                    }
+                    if (i < recentlyAdded.size() - 1) {
+                        sb.append("\n");
+                    }
+                }
+                tvRecentlyAddedList.setText(sb.toString());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading dashboard data: " + e.getMessage(), e);
         }
     }
 

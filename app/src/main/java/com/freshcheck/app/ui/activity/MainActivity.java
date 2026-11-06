@@ -51,12 +51,20 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottom_navigation);
         setupBottomNavigation();
 
-        // Notification Channel setup & Permission check
-        NotificationHelper.createNotificationChannel(this);
-        checkNotificationPermission();
+        // Notification Channel setup & Permission check safely
+        try {
+            NotificationHelper.createNotificationChannel(this);
+            checkNotificationPermission();
+        } catch (Exception e) {
+            Log.w(TAG, "Notification channel or permission setup handled: " + e.getMessage());
+        }
 
-        // Schedule background worker
-        WorkManagerScheduler.schedulePeriodicExpiryCheck(this);
+        // Schedule background worker safely
+        try {
+            WorkManagerScheduler.schedulePeriodicExpiryCheck(this);
+        } catch (Exception e) {
+            Log.w(TAG, "WorkManager initialization handled: " + e.getMessage());
+        }
 
         // Handle navigation from notification extra if present
         handleNotificationIntent(getIntent());

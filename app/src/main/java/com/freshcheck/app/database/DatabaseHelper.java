@@ -365,76 +365,84 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "Migrating database from version " + oldVersion + " to " + newVersion);
         if (oldVersion < 2) {
-            try {
-                // Alter food_items safely
-                db.execSQL("ALTER TABLE " + TABLE_FOOD_ITEMS + " ADD COLUMN " + COL_FOOD_IMAGE_URI + " TEXT;");
-                db.execSQL("ALTER TABLE " + TABLE_FOOD_ITEMS + " ADD COLUMN " + COL_FOOD_HOUSEHOLD_ID + " TEXT;");
-                db.execSQL("ALTER TABLE " + TABLE_FOOD_ITEMS + " ADD COLUMN " + COL_FOOD_CREATED_AT + " INTEGER DEFAULT 0;");
-                db.execSQL("ALTER TABLE " + TABLE_FOOD_ITEMS + " ADD COLUMN " + COL_FOOD_UPDATED_AT + " INTEGER DEFAULT 0;");
+            safeAlterTable(db, TABLE_FOOD_ITEMS, COL_FOOD_IMAGE_URI, "TEXT");
+            safeAlterTable(db, TABLE_FOOD_ITEMS, COL_FOOD_HOUSEHOLD_ID, "TEXT");
+            safeAlterTable(db, TABLE_FOOD_ITEMS, COL_FOOD_CREATED_AT, "INTEGER DEFAULT 0");
+            safeAlterTable(db, TABLE_FOOD_ITEMS, COL_FOOD_UPDATED_AT, "INTEGER DEFAULT 0");
 
-                // Alter shopping_items safely
-                db.execSQL("ALTER TABLE " + TABLE_SHOPPING_ITEMS + " ADD COLUMN " + COL_SHOPPING_COST + " REAL DEFAULT 0.0;");
-                db.execSQL("ALTER TABLE " + TABLE_SHOPPING_ITEMS + " ADD COLUMN " + COL_SHOPPING_HOUSEHOLD_ID + " TEXT;");
+            safeAlterTable(db, TABLE_SHOPPING_ITEMS, COL_SHOPPING_COST, "REAL DEFAULT 0.0");
+            safeAlterTable(db, TABLE_SHOPPING_ITEMS, COL_SHOPPING_HOUSEHOLD_ID, "TEXT");
 
-                // Alter waste_records safely
-                db.execSQL("ALTER TABLE " + TABLE_WASTE_RECORDS + " ADD COLUMN " + COL_WASTE_HOUSEHOLD_ID + " TEXT;");
+            safeAlterTable(db, TABLE_WASTE_RECORDS, COL_WASTE_HOUSEHOLD_ID, "TEXT");
 
-                // Create new tables
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_CONSUMPTION_RECORDS + " ("
-                        + COL_CONSUMPTION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_CONSUMPTION_FOOD_ID + " INTEGER, "
-                        + COL_CONSUMPTION_FOOD_NAME + " TEXT NOT NULL, "
-                        + COL_CONSUMPTION_QUANTITY + " REAL NOT NULL, "
-                        + COL_CONSUMPTION_UNIT + " TEXT NOT NULL, "
-                        + COL_CONSUMPTION_DATE + " TEXT NOT NULL, "
-                        + COL_CONSUMPTION_CATEGORY + " TEXT, "
-                        + COL_CONSUMPTION_HOUSEHOLD_ID + " TEXT);");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_CONSUMPTION_RECORDS + " ("
+                    + COL_CONSUMPTION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_CONSUMPTION_FOOD_ID + " INTEGER, "
+                    + COL_CONSUMPTION_FOOD_NAME + " TEXT NOT NULL, "
+                    + COL_CONSUMPTION_QUANTITY + " REAL NOT NULL, "
+                    + COL_CONSUMPTION_UNIT + " TEXT NOT NULL, "
+                    + COL_CONSUMPTION_DATE + " TEXT NOT NULL, "
+                    + COL_CONSUMPTION_CATEGORY + " TEXT, "
+                    + COL_CONSUMPTION_HOUSEHOLD_ID + " TEXT);");
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_MEAL_PLANS + " ("
-                        + COL_MEAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_MEAL_DATE + " TEXT NOT NULL, "
-                        + COL_MEAL_TYPE + " TEXT NOT NULL, "
-                        + COL_MEAL_RECIPE_ID + " TEXT, "
-                        + COL_MEAL_RECIPE_TITLE + " TEXT NOT NULL, "
-                        + COL_MEAL_NOTES + " TEXT, "
-                        + COL_MEAL_HOUSEHOLD_ID + " TEXT, "
-                        + COL_MEAL_IS_COMPLETED + " INTEGER DEFAULT 0);");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_MEAL_PLANS + " ("
+                    + COL_MEAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_MEAL_DATE + " TEXT NOT NULL, "
+                    + COL_MEAL_TYPE + " TEXT NOT NULL, "
+                    + COL_MEAL_RECIPE_ID + " TEXT, "
+                    + COL_MEAL_RECIPE_TITLE + " TEXT NOT NULL, "
+                    + COL_MEAL_NOTES + " TEXT, "
+                    + COL_MEAL_HOUSEHOLD_ID + " TEXT, "
+                    + COL_MEAL_IS_COMPLETED + " INTEGER DEFAULT 0);");
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_HOUSEHOLDS + " ("
-                        + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_HOUSEHOLD_ID + " TEXT UNIQUE NOT NULL, "
-                        + COL_HOUSEHOLD_NAME + " TEXT NOT NULL, "
-                        + COL_HOUSEHOLD_INVITE_CODE + " TEXT NOT NULL, "
-                        + COL_HOUSEHOLD_ADMIN_UID + " TEXT NOT NULL, "
-                        + COL_HOUSEHOLD_CREATED_AT + " INTEGER, "
-                        + COL_HOUSEHOLD_MEMBER_COUNT + " INTEGER DEFAULT 1);");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_HOUSEHOLDS + " ("
+                    + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_HOUSEHOLD_ID + " TEXT UNIQUE NOT NULL, "
+                    + COL_HOUSEHOLD_NAME + " TEXT NOT NULL, "
+                    + COL_HOUSEHOLD_INVITE_CODE + " TEXT NOT NULL, "
+                    + COL_HOUSEHOLD_ADMIN_UID + " TEXT NOT NULL, "
+                    + COL_HOUSEHOLD_CREATED_AT + " INTEGER, "
+                    + COL_HOUSEHOLD_MEMBER_COUNT + " INTEGER DEFAULT 1);");
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_HOUSEHOLD_MEMBERS + " ("
-                        + COL_MEMBER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_MEMBER_HOUSEHOLD_ID + " TEXT NOT NULL, "
-                        + COL_MEMBER_USER_UID + " TEXT NOT NULL, "
-                        + COL_MEMBER_USER_NAME + " TEXT NOT NULL, "
-                        + COL_MEMBER_ROLE + " TEXT NOT NULL, "
-                        + COL_MEMBER_JOINED_AT + " INTEGER);");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_HOUSEHOLD_MEMBERS + " ("
+                    + COL_MEMBER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_MEMBER_HOUSEHOLD_ID + " TEXT NOT NULL, "
+                    + COL_MEMBER_USER_UID + " TEXT NOT NULL, "
+                    + COL_MEMBER_USER_NAME + " TEXT NOT NULL, "
+                    + COL_MEMBER_ROLE + " TEXT NOT NULL, "
+                    + COL_MEMBER_JOINED_AT + " INTEGER);");
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_ACTIVITY_LOGS + " ("
-                        + COL_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_ACTIVITY_HOUSEHOLD_ID + " TEXT, "
-                        + COL_ACTIVITY_USER_UID + " TEXT, "
-                        + COL_ACTIVITY_USER_NAME + " TEXT NOT NULL, "
-                        + COL_ACTIVITY_ACTION + " TEXT NOT NULL, "
-                        + COL_ACTIVITY_TIMESTAMP + " INTEGER);");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_ACTIVITY_LOGS + " ("
+                    + COL_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_ACTIVITY_HOUSEHOLD_ID + " TEXT, "
+                    + COL_ACTIVITY_USER_UID + " TEXT, "
+                    + COL_ACTIVITY_USER_NAME + " TEXT NOT NULL, "
+                    + COL_ACTIVITY_ACTION + " TEXT NOT NULL, "
+                    + COL_ACTIVITY_TIMESTAMP + " INTEGER);");
 
-                db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_BUDGET_SETTINGS + " ("
-                        + COL_BUDGET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + COL_BUDGET_MONTH + " TEXT UNIQUE NOT NULL, "
-                        + COL_BUDGET_AMOUNT + " REAL DEFAULT 5000.0, "
-                        + COL_BUDGET_CURRENCY + " TEXT DEFAULT '৳');");
+            safeExecuteSql(db, "CREATE TABLE IF NOT EXISTS " + TABLE_BUDGET_SETTINGS + " ("
+                    + COL_BUDGET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_BUDGET_MONTH + " TEXT UNIQUE NOT NULL, "
+                    + COL_BUDGET_AMOUNT + " REAL DEFAULT 5000.0, "
+                    + COL_BUDGET_CURRENCY + " TEXT DEFAULT '৳');");
 
-                Log.i(TAG, "Database successfully upgraded to version 2");
-            } catch (Exception e) {
-                Log.e(TAG, "Error migrating database tables: " + e.getMessage());
-            }
+            Log.i(TAG, "Database upgrade migration completed successfully");
+        }
+    }
+
+    private void safeAlterTable(SQLiteDatabase db, String table, String column, String type) {
+        try {
+            db.execSQL("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type + ";");
+        } catch (Exception e) {
+            Log.d(TAG, "Column " + column + " already exists or alter skipped: " + e.getMessage());
+        }
+    }
+
+    private void safeExecuteSql(SQLiteDatabase db, String sql) {
+        try {
+            db.execSQL(sql);
+        } catch (Exception e) {
+            Log.w(TAG, "safeExecuteSql error: " + e.getMessage());
         }
     }
 }

@@ -367,33 +367,58 @@ public class FoodRepository {
 
     public static FoodItem cursorToFoodItem(Cursor cursor) {
         FoodItem item = new FoodItem();
-        item.setId(cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_ID)));
-        item.setName(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_NAME)));
-        item.setQuantity(cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_QUANTITY)));
-        item.setUnit(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_UNIT)));
-        item.setCategory(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_CATEGORY)));
-        item.setPurchaseDate(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_PURCHASE_DATE)));
-        item.setExpiryDate(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_EXPIRY_DATE)));
-        item.setLocation(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_LOCATION)));
-        item.setEstimatedCost(cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_COST)));
-        item.setConsumed(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_IS_CONSUMED)) == 1);
-        item.setWasted(cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_IS_WASTED)) == 1);
-        item.setNotes(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_NOTES)));
+        int idx;
 
-        int fbIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_FIREBASE_ID);
-        if (fbIdx != -1) item.setFirebaseId(cursor.getString(fbIdx));
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_ID);
+        if (idx != -1) item.setId(cursor.getLong(idx));
 
-        int imgIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_IMAGE_URI);
-        if (imgIdx != -1) item.setImageUri(cursor.getString(imgIdx));
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_NAME);
+        if (idx != -1) item.setName(cursor.getString(idx));
 
-        int houseIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_HOUSEHOLD_ID);
-        if (houseIdx != -1) item.setHouseholdId(cursor.getString(houseIdx));
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_QUANTITY);
+        if (idx != -1) item.setQuantity(cursor.getDouble(idx));
 
-        int crtIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_CREATED_AT);
-        if (crtIdx != -1) item.setCreatedTimestamp(cursor.getLong(crtIdx));
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_UNIT);
+        if (idx != -1) item.setUnit(cursor.getString(idx));
 
-        int updIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_UPDATED_AT);
-        if (updIdx != -1) item.setUpdatedTimestamp(cursor.getLong(updIdx));
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_CATEGORY);
+        if (idx != -1) item.setCategory(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_PURCHASE_DATE);
+        if (idx != -1) item.setPurchaseDate(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_EXPIRY_DATE);
+        if (idx != -1) item.setExpiryDate(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_LOCATION);
+        if (idx != -1) item.setLocation(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_COST);
+        if (idx != -1) item.setEstimatedCost(cursor.getDouble(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_IS_CONSUMED);
+        if (idx != -1) item.setConsumed(cursor.getInt(idx) == 1);
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_IS_WASTED);
+        if (idx != -1) item.setWasted(cursor.getInt(idx) == 1);
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_NOTES);
+        if (idx != -1) item.setNotes(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_FIREBASE_ID);
+        if (idx != -1) item.setFirebaseId(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_IMAGE_URI);
+        if (idx != -1) item.setImageUri(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_HOUSEHOLD_ID);
+        if (idx != -1) item.setHouseholdId(cursor.getString(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_CREATED_AT);
+        if (idx != -1) item.setCreatedTimestamp(cursor.getLong(idx));
+
+        idx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_UPDATED_AT);
+        if (idx != -1) item.setUpdatedTimestamp(cursor.getLong(idx));
 
         return item;
     }
