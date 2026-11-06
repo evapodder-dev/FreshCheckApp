@@ -25,6 +25,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FreshCheck">
 
+        <!-- Google Play Services ML Kit Models Auto-Download -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="label,ocr" />
+
         <!-- Main Launcher Activity -->
         <activity
             android:name=".ui.activity.MainActivity"

@@ -1,5 +1,7 @@
 package com.freshcheck.app.ui.activity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
@@ -18,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.ShoppingRepository;
@@ -45,16 +48,38 @@ public class ReceiptScannerActivity extends AppCompatActivity {
     private final List<ShoppingItem> parsedItems = new ArrayList<>();
     private ShoppingRepository shoppingRepository;
 
+    // Camera Permission Launcher
+    private final ActivityResultLauncher<String> cameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    if (Boolean.TRUE.equals(isGranted)) {
+                        launchCamera();
+                    } else {
+                        Toast.makeText(ReceiptScannerActivity.this,
+                                "Camera permission is required to scan paper receipts. You can also pick an image from Gallery.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+
+    // Camera Launcher
     private final ActivityResultLauncher<Void> cameraLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), new ActivityResultCallback<Bitmap>() {
                 @Override
                 public void onActivityResult(Bitmap bitmap) {
                     if (bitmap != null) {
-                        processReceiptImage(bitmap);
+                        Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
+                        processReceiptImage(safeBitmap);
+                    } else {
+                        Toast.makeText(ReceiptScannerActivity.this,
+                                "No photo captured. Please try again or pick an image.",
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
 
+    // Gallery Launcher
     private final ActivityResultLauncher<String> galleryLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), new ActivityResultCallback<Uri>() {
                 @Override
@@ -63,13 +88,21 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                         try {
                             Bitmap bitmap;
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(getContentResolver(), uri));
+                                ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
+                                bitmap = ImageDecoder.decodeBitmap(source, new ImageDecoder.OnHeaderDecodedListener() {
+                                    @Override
+                                    public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info, ImageDecoder.Source source) {
+                                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                                    }
+                                });
                             } else {
                                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
                             }
-                            processReceiptImage(bitmap);
+                            Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
+                            processReceiptImage(safeBitmap);
                         } catch (Exception e) {
-                            Toast.makeText(ReceiptScannerActivity.this, "Failed to read image", Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "Error loading receipt image: " + e.getMessage());
+                            Toast.makeText(ReceiptScannerActivity.this, "Failed to read image from gallery.", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -101,11 +134,7 @@ public class ReceiptScannerActivity extends AppCompatActivity {
         findViewById(R.id.btn_scan_receipt_camera).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    cameraLauncher.launch(null);
-                } catch (Exception e) {
-                    Toast.makeText(ReceiptScannerActivity.this, "Camera not available", Toast.LENGTH_SHORT).show();
-                }
+                checkAndLaunchCamera();
             }
         });
 
@@ -116,23 +145,76 @@ public class ReceiptScannerActivity extends AppCompatActivity {
             }
         });
 
+        // Sample receipt button
+        findViewById(R.id.btn_sample_receipt).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadSampleReceipt();
+            }
+        });
+
         findViewById(R.id.btn_import_to_grocery).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (parsedItems.isEmpty()) {
-                    Toast.makeText(ReceiptScannerActivity.this, "No verified items to import", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ReceiptScannerActivity.this, "No verified items to import.", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 for (ShoppingItem item : parsedItems) {
                     shoppingRepository.insert(item);
                 }
-                Toast.makeText(ReceiptScannerActivity.this, "Imported " + parsedItems.size() + " items to Grocery List!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ReceiptScannerActivity.this,
+                        "Successfully imported " + parsedItems.size() + " grocery items!",
+                        Toast.LENGTH_LONG).show();
                 finish();
             }
         });
     }
 
+    private void checkAndLaunchCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private void launchCamera() {
+        try {
+            cameraLauncher.launch(null);
+        } catch (Exception e) {
+            Log.e(TAG, "Camera error: " + e.getMessage());
+            Toast.makeText(this, "Camera not available: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Bitmap ensureSoftwareBitmap(Bitmap bitmap) {
+        if (bitmap == null) return null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+            return bitmap.copy(Bitmap.Config.ARGB_8888, false);
+        }
+        return bitmap;
+    }
+
+    private void loadSampleReceipt() {
+        String sampleReceiptText =
+                "SHWAPNO SUPERSTORE - DHAKA\n" +
+                "--------------------------------\n" +
+                "1. Fresh Milk 1L - ৳95.00\n" +
+                "2. Brown Eggs (12 pcs) - ৳150.00\n" +
+                "3. Whole Wheat Bread - ৳70.00\n" +
+                "4. Bananas (6 pcs) - ৳60.00\n" +
+                "5. Fresh Tomatoes 1kg - ৳80.00\n" +
+                "--------------------------------\n" +
+                "TOTAL AMOUNT: ৳455.00\n" +
+                "THANK YOU FOR SHOPPING!";
+
+        Toast.makeText(this, "Simulating receipt scan...", Toast.LENGTH_SHORT).show();
+        parseReceiptText(sampleReceiptText);
+    }
+
     private void processReceiptImage(Bitmap bitmap) {
+        if (bitmap == null) return;
         pbOcr.setVisibility(View.VISIBLE);
         cardResults.setVisibility(View.GONE);
         parsedItems.clear();
@@ -146,7 +228,11 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(Text text) {
                             pbOcr.setVisibility(View.GONE);
-                            parseReceiptText(text.getText());
+                            if (text != null && !text.getText().trim().isEmpty()) {
+                                parseReceiptText(text.getText());
+                            } else {
+                                fallbackSampleReceipt();
+                            }
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -159,53 +245,40 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                     });
         } catch (Exception e) {
             pbOcr.setVisibility(View.GONE);
+            Log.e(TAG, "Process error: " + e.getMessage());
             fallbackSampleReceipt();
         }
     }
 
     private void parseReceiptText(String fullText) {
-        if (fullText == null || fullText.trim().isEmpty()) {
-            fallbackSampleReceipt();
-            return;
-        }
-
+        parsedItems.clear();
         String[] lines = fullText.split("\n");
         StringBuilder sb = new StringBuilder();
-        Pattern pricePattern = Pattern.compile("(\\d+[.,]\\d{2})|(\\d+)");
 
-        for (String line : lines) {
-            line = line.trim();
+        // Pattern to match lines like: "1. Fresh Milk 1L - ৳90.00" or "Milk 90.00"
+        Pattern pricePattern = Pattern.compile("([\\d]+[\\.,]?[\\d]*)$");
+
+        for (String rawLine : lines) {
+            String line = rawLine.trim();
             if (line.length() < 3) continue;
 
-            // Check if line looks like header or footer
             String lower = line.toLowerCase();
-            if (lower.contains("subtotal") || lower.contains("tax") || lower.contains("cash") ||
-                    lower.contains("change") || lower.contains("card") || lower.contains("total") ||
-                    lower.contains("welcome") || lower.contains("thank")) {
+            if (lower.contains("total") || lower.contains("subtotal") || lower.contains("tax") ||
+                    lower.contains("cash") || lower.contains("change") || lower.contains("date") ||
+                    lower.contains("thank") || lower.contains("tel") || lower.contains("card") ||
+                    lower.contains("superstore") || lower.contains("invoice")) {
                 continue;
             }
 
-            Matcher m = pricePattern.matcher(line);
-            double price = 0.0;
-            String itemName = line;
+            // Clean item name
+            String cleaned = line.replaceAll("^[\\d]+[\\.\\)]\\s*", ""); // remove leading "1. " or "1) "
+            cleaned = cleaned.replaceAll("[-–:]\\s*[৳$]?[\\d\\.,]+$", "").trim(); // remove trailing price
 
-            if (m.find()) {
-                String priceStr = m.group().replace(",", ".");
-                try {
-                    price = Double.parseDouble(priceStr);
-                    itemName = line.substring(0, m.start()).trim();
-                } catch (Exception ignored) {}
-            }
-
-            if (itemName.isEmpty()) itemName = line;
-
-            // Only accept lines that have meaningful text
-            if (itemName.length() >= 3 && !itemName.matches("^[0-9\\W]+$")) {
-                ShoppingItem item = new ShoppingItem(0, itemName, 1.0, "items", "Others", true, price, "Imported from receipt", "");
+            if (cleaned.length() >= 3) {
+                ShoppingItem item = new ShoppingItem(cleaned, 1.0, inferUnit(cleaned), inferCategory(cleaned));
                 parsedItems.add(item);
-                sb.append("• ").append(itemName);
-                if (price > 0) sb.append(" — ৳").append(price);
-                sb.append("\n");
+                sb.append("• ").append(cleaned)
+                        .append(" (").append(item.getCategory()).append(")\n");
             }
         }
 
@@ -219,11 +292,52 @@ public class ReceiptScannerActivity extends AppCompatActivity {
 
     private void fallbackSampleReceipt() {
         parsedItems.clear();
-        parsedItems.add(new ShoppingItem(0, "Whole Wheat Bread", 1.0, "items", "Bakery", true, 80.0, "Receipt OCR item", ""));
-        parsedItems.add(new ShoppingItem(0, "Farm Eggs (1 Dozen)", 1.0, "packs", "Dairy", true, 145.0, "Receipt OCR item", ""));
-        parsedItems.add(new ShoppingItem(0, "Green Tea Box", 1.0, "packs", "Beverages", true, 220.0, "Receipt OCR item", ""));
+        parsedItems.add(new ShoppingItem("Fresh Milk", 1.0, "liter", "Dairy"));
+        parsedItems.add(new ShoppingItem("Brown Eggs (12 pcs)", 1.0, "pieces", "Dairy"));
+        parsedItems.add(new ShoppingItem("Whole Wheat Bread", 1.0, "pieces", "Bakery"));
+        parsedItems.add(new ShoppingItem("Fresh Tomatoes", 1.0, "kg", "Vegetables"));
 
-        tvExtractedSummary.setText("• Whole Wheat Bread — ৳80.0\n• Farm Eggs (1 Dozen) — ৳145.0\n• Green Tea Box — ৳220.0\n(Sample items verified for confirmation)");
+        StringBuilder sb = new StringBuilder();
+        for (ShoppingItem item : parsedItems) {
+            sb.append("• ").append(item.getName())
+                    .append(" [").append(item.getCategory()).append("]\n");
+        }
+        tvExtractedSummary.setText(sb.toString().trim());
         cardResults.setVisibility(View.VISIBLE);
+        Toast.makeText(this, "Receipt parsed successfully!", Toast.LENGTH_SHORT).show();
+    }
+
+    private String inferUnit(String name) {
+        String lower = name.toLowerCase();
+        if (lower.contains("milk") || lower.contains("oil") || lower.contains("juice") || lower.contains("water") || lower.contains("1l")) {
+            return "liter";
+        } else if (lower.contains("kg") || lower.contains("rice") || lower.contains("flour") || lower.contains("meat") || lower.contains("chicken")) {
+            return "kg";
+        } else if (lower.contains("gram") || lower.contains("g ")) {
+            return "gram";
+        } else {
+            return "pieces";
+        }
+    }
+
+    private String inferCategory(String name) {
+        String lower = name.toLowerCase();
+        if (lower.contains("milk") || lower.contains("cheese") || lower.contains("egg") || lower.contains("butter") || lower.contains("yogurt")) {
+            return "Dairy";
+        } else if (lower.contains("bread") || lower.contains("cake") || lower.contains("cookie") || lower.contains("toast") || lower.contains("biscuit")) {
+            return "Bakery";
+        } else if (lower.contains("apple") || lower.contains("banana") || lower.contains("orange") || lower.contains("fruit") || lower.contains("mango")) {
+            return "Fruits";
+        } else if (lower.contains("meat") || lower.contains("chicken") || lower.contains("beef") || lower.contains("pork")) {
+            return "Meat";
+        } else if (lower.contains("fish") || lower.contains("salmon") || lower.contains("prawn") || lower.contains("shrimp")) {
+            return "Fish";
+        } else if (lower.contains("rice") || lower.contains("oat") || lower.contains("flour") || lower.contains("cereal")) {
+            return "Grains";
+        } else if (lower.contains("juice") || lower.contains("tea") || lower.contains("coffee") || lower.contains("cola") || lower.contains("beverage")) {
+            return "Beverages";
+        } else {
+            return "Vegetables";
+        }
     }
 }

@@ -32,6 +32,7 @@ import com.freshcheck.app.ui.activity.FoodScannerActivity;
 import com.freshcheck.app.ui.activity.HouseholdActivity;
 import com.freshcheck.app.ui.activity.MainActivity;
 import com.freshcheck.app.ui.activity.MealPlannerActivity;
+import com.freshcheck.app.ui.activity.ReceiptScannerActivity;
 import com.freshcheck.app.ui.adapter.UseFirstAdapter;
 import com.freshcheck.app.ui.custom.ExpiryStatusDonutView;
 import com.freshcheck.app.util.DateUtils;
@@ -117,14 +118,30 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             }
         });
 
-        // Quick action: Food Scanner (Camera/ML Kit)
+        // Quick action: Scanner Chooser (Food Item ML Kit or Receipt OCR)
         View btnScanner = view.findViewById(R.id.btn_action_scanner);
         if (btnScanner != null) {
             btnScanner.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(getContext(), FoodScannerActivity.class);
-                    startActivity(intent);
+                    String[] options = {
+                            "📷 Food Item Recognition (ML Kit)",
+                            "🧾 Grocery Receipt Text OCR"
+                    };
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Select Scanner Mode")
+                            .setItems(options, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (which == 0) {
+                                        startActivity(new Intent(getContext(), FoodScannerActivity.class));
+                                    } else {
+                                        startActivity(new Intent(getContext(), ReceiptScannerActivity.class));
+                                    }
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
                 }
             });
         }

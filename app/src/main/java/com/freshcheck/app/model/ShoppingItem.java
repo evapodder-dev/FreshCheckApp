@@ -26,6 +26,10 @@ public class ShoppingItem implements Serializable {
         this.householdId = "";
     }
 
+    public ShoppingItem(String name, double quantity, String unit, String category) {
+        this(0, name, quantity, unit, category, false, 0.0, "", "");
+    }
+
     public ShoppingItem(long id, String name, double quantity, String unit,
                         String category, boolean isPurchased, String notes) {
         this(id, name, quantity, unit, category, isPurchased, 0.0, notes, "");
