@@ -26,7 +26,6 @@ import com.freshcheck.app.ui.fragment.DashboardFragment;
 import com.freshcheck.app.ui.fragment.InventoryFragment;
 import com.freshcheck.app.ui.fragment.RecipesFragment;
 import com.freshcheck.app.ui.fragment.ShoppingFragment;
-import com.freshcheck.app.ui.fragment.WasteFragment;
 import com.freshcheck.app.util.NotificationHelper;
 import com.freshcheck.app.util.WorkManagerScheduler;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -89,30 +88,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupBottomNavigation() {
-        bottomNav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                Fragment selectedFragment = null;
-                int itemId = item.getItemId();
+        bottomNav.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int itemId = item.getItemId();
 
-                if (itemId == R.id.nav_dashboard) {
-                    selectedFragment = new DashboardFragment();
-                } else if (itemId == R.id.nav_inventory) {
-                    selectedFragment = new InventoryFragment();
-                } else if (itemId == R.id.nav_recipes) {
-                    selectedFragment = new RecipesFragment();
-                } else if (itemId == R.id.nav_shopping) {
-                    selectedFragment = new ShoppingFragment();
-                } else if (itemId == R.id.nav_profile) {
-                    selectedFragment = new com.freshcheck.app.ui.fragment.ProfileFragment();
-                }
-
-                if (selectedFragment != null) {
-                    loadFragment(selectedFragment);
-                    return true;
-                }
-                return false;
+            if (itemId == R.id.nav_dashboard) {
+                selectedFragment = new DashboardFragment();
+            } else if (itemId == R.id.nav_inventory) {
+                selectedFragment = new InventoryFragment();
+            } else if (itemId == R.id.nav_recipes) {
+                selectedFragment = new RecipesFragment();
+            } else if (itemId == R.id.nav_shopping) {
+                selectedFragment = new ShoppingFragment();
+            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new com.freshcheck.app.ui.fragment.ProfileFragment();
             }
+
+            if (selectedFragment != null) {
+                loadFragment(selectedFragment);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -209,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onStart() called");
         auditReceiver = new InventoryAuditReceiver();
         IntentFilter filter = new IntentFilter(InventoryAuditService.ACTION_AUDIT_COMPLETE);
-        registerReceiver(auditReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
+        ContextCompat.registerReceiver(this, auditReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
