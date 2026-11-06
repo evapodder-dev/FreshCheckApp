@@ -21,11 +21,15 @@ public class FoodItem implements Serializable {
     private boolean isWasted;
     private String notes;
     private String firebaseId;
+    private String imageUri;
+    private String householdId;
+    private long createdTimestamp;
+    private long updatedTimestamp;
 
     public FoodItem() {
         this.quantity = 1.0;
         this.unit = "items";
-        this.category = "Produce (Fruits & Veg)";
+        this.category = "Vegetables";
         this.location = "Refrigerator";
         this.purchaseDate = DateUtils.getTodayString();
         this.expiryDate = DateUtils.getFutureDateString(3);
@@ -33,12 +37,26 @@ public class FoodItem implements Serializable {
         this.isConsumed = false;
         this.isWasted = false;
         this.notes = "";
+        this.imageUri = "";
+        this.householdId = "";
+        this.createdTimestamp = System.currentTimeMillis();
+        this.updatedTimestamp = System.currentTimeMillis();
     }
 
     public FoodItem(long id, String name, double quantity, String unit, String category,
                     String purchaseDate, String expiryDate, String location,
                     double estimatedCost, boolean isConsumed, boolean isWasted,
                     String notes, String firebaseId) {
+        this(id, name, quantity, unit, category, purchaseDate, expiryDate, location,
+                estimatedCost, isConsumed, isWasted, notes, firebaseId, "", "",
+                System.currentTimeMillis(), System.currentTimeMillis());
+    }
+
+    public FoodItem(long id, String name, double quantity, String unit, String category,
+                    String purchaseDate, String expiryDate, String location,
+                    double estimatedCost, boolean isConsumed, boolean isWasted,
+                    String notes, String firebaseId, String imageUri, String householdId,
+                    long createdTimestamp, long updatedTimestamp) {
         this.id = id;
         this.name = name;
         this.quantity = quantity;
@@ -52,6 +70,10 @@ public class FoodItem implements Serializable {
         this.isWasted = isWasted;
         this.notes = notes;
         this.firebaseId = firebaseId;
+        this.imageUri = imageUri != null ? imageUri : "";
+        this.householdId = householdId != null ? householdId : "";
+        this.createdTimestamp = createdTimestamp > 0 ? createdTimestamp : System.currentTimeMillis();
+        this.updatedTimestamp = updatedTimestamp > 0 ? updatedTimestamp : System.currentTimeMillis();
     }
 
     public long getId() { return id; }
@@ -66,7 +88,7 @@ public class FoodItem implements Serializable {
     public String getUnit() { return unit != null ? unit : "items"; }
     public void setUnit(String unit) { this.unit = unit; }
 
-    public String getCategory() { return category != null ? category : "Other"; }
+    public String getCategory() { return category != null ? category : "Others"; }
     public void setCategory(String category) { this.category = category; }
 
     public String getPurchaseDate() { return purchaseDate != null ? purchaseDate : ""; }
@@ -92,6 +114,18 @@ public class FoodItem implements Serializable {
 
     public String getFirebaseId() { return firebaseId; }
     public void setFirebaseId(String firebaseId) { this.firebaseId = firebaseId; }
+
+    public String getImageUri() { return imageUri != null ? imageUri : ""; }
+    public void setImageUri(String imageUri) { this.imageUri = imageUri; }
+
+    public String getHouseholdId() { return householdId != null ? householdId : ""; }
+    public void setHouseholdId(String householdId) { this.householdId = householdId; }
+
+    public long getCreatedTimestamp() { return createdTimestamp; }
+    public void setCreatedTimestamp(long createdTimestamp) { this.createdTimestamp = createdTimestamp; }
+
+    public long getUpdatedTimestamp() { return updatedTimestamp; }
+    public void setUpdatedTimestamp(long updatedTimestamp) { this.updatedTimestamp = updatedTimestamp; }
 
     /**
      * Calculates days until expiry based on current date.
@@ -149,6 +183,10 @@ public class FoodItem implements Serializable {
         values.put("is_wasted", isWasted ? 1 : 0);
         values.put("notes", notes);
         values.put("firebase_id", firebaseId);
+        values.put("image_uri", imageUri);
+        values.put("household_id", householdId);
+        values.put("created_at", createdTimestamp);
+        values.put("updated_at", updatedTimestamp);
         return values;
     }
 
@@ -165,6 +203,10 @@ public class FoodItem implements Serializable {
         map.put("isConsumed", isConsumed);
         map.put("isWasted", isWasted);
         map.put("notes", notes);
+        map.put("imageUri", imageUri);
+        map.put("householdId", householdId);
+        map.put("createdTimestamp", createdTimestamp);
+        map.put("updatedTimestamp", updatedTimestamp);
         return map;
     }
 }

@@ -95,8 +95,8 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new RecipesFragment();
                 } else if (itemId == R.id.nav_shopping) {
                     selectedFragment = new ShoppingFragment();
-                } else if (itemId == R.id.nav_waste) {
-                    selectedFragment = new WasteFragment();
+                } else if (itemId == R.id.nav_profile) {
+                    selectedFragment = new com.freshcheck.app.ui.fragment.ProfileFragment();
                 }
 
                 if (selectedFragment != null) {

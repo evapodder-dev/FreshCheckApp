@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import com.freshcheck.app.util.DateUtils;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WasteRecord implements Serializable {
     private long id;
@@ -14,6 +16,7 @@ public class WasteRecord implements Serializable {
     private String reason;
     private double estimatedCost;
     private String notes;
+    private String householdId;
 
     public WasteRecord() {
         this.quantity = 1.0;
@@ -22,10 +25,16 @@ public class WasteRecord implements Serializable {
         this.reason = "Past Expiry Date";
         this.estimatedCost = 0.0;
         this.notes = "";
+        this.householdId = "";
     }
 
     public WasteRecord(long id, String foodName, double quantity, String unit,
                        String wasteDate, String reason, double estimatedCost, String notes) {
+        this(id, foodName, quantity, unit, wasteDate, reason, estimatedCost, notes, "");
+    }
+
+    public WasteRecord(long id, String foodName, double quantity, String unit,
+                       String wasteDate, String reason, double estimatedCost, String notes, String householdId) {
         this.id = id;
         this.foodName = foodName;
         this.quantity = quantity;
@@ -34,6 +43,7 @@ public class WasteRecord implements Serializable {
         this.reason = reason;
         this.estimatedCost = estimatedCost;
         this.notes = notes;
+        this.householdId = householdId != null ? householdId : "";
     }
 
     public long getId() { return id; }
@@ -60,6 +70,9 @@ public class WasteRecord implements Serializable {
     public String getNotes() { return notes != null ? notes : ""; }
     public void setNotes(String notes) { this.notes = notes; }
 
+    public String getHouseholdId() { return householdId != null ? householdId : ""; }
+    public void setHouseholdId(String householdId) { this.householdId = householdId; }
+
     public ContentValues toContentValues() {
         ContentValues values = new ContentValues();
         values.put("food_name", foodName);
@@ -69,6 +82,20 @@ public class WasteRecord implements Serializable {
         values.put("reason", reason);
         values.put("estimated_cost", estimatedCost);
         values.put("notes", notes);
+        values.put("household_id", householdId);
         return values;
+    }
+
+    public Map<String, Object> toFirebaseMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("foodName", foodName);
+        map.put("quantity", quantity);
+        map.put("unit", unit);
+        map.put("wasteDate", wasteDate);
+        map.put("reason", reason);
+        map.put("estimatedCost", estimatedCost);
+        map.put("notes", notes);
+        map.put("householdId", householdId);
+        return map;
     }
 }

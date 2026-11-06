@@ -22,32 +22,41 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.FoodRepository;
+import com.freshcheck.app.database.HouseholdRepository;
 import com.freshcheck.app.database.WasteRepository;
 import com.freshcheck.app.model.CategoryConstants;
 import com.freshcheck.app.model.FoodItem;
 import com.freshcheck.app.model.WasteRecord;
-import com.freshcheck.app.service.InventoryAuditService;
 import com.freshcheck.app.ui.activity.AddEditFoodActivity;
-import com.freshcheck.app.ui.activity.CloudSyncActivity;
+import com.freshcheck.app.ui.activity.FoodScannerActivity;
+import com.freshcheck.app.ui.activity.HouseholdActivity;
 import com.freshcheck.app.ui.activity.MainActivity;
-import com.freshcheck.app.ui.activity.ProviderDemoActivity;
+import com.freshcheck.app.ui.activity.MealPlannerActivity;
 import com.freshcheck.app.ui.adapter.UseFirstAdapter;
 import com.freshcheck.app.ui.custom.ExpiryStatusDonutView;
 import com.freshcheck.app.util.DateUtils;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUseFirstActionListener {
     private static final String TAG = "DashboardFragment";
 
+    private TextView tvGreeting;
+    private TextView tvScopePill;
     private ExpiryStatusDonutView donutChartView;
     private TextView tvLegendFresh, tvLegendExpiring, tvLegendExpired;
     private TextView tvStatTotal, tvStatExpiring, tvStatToday, tvStatExpired;
     private RecyclerView rvUseFirst;
     private TextView tvEmptyUseFirst;
+    private TextView tvRecentlyAddedList;
+
     private UseFirstAdapter useFirstAdapter;
     private FoodRepository foodRepository;
+    private HouseholdRepository householdRepository;
 
     @Nullable
     @Override
@@ -55,7 +64,10 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
         foodRepository = new FoodRepository(requireContext());
+        householdRepository = new HouseholdRepository(requireContext());
 
+        tvGreeting = view.findViewById(R.id.tv_dashboard_greeting);
+        tvScopePill = view.findViewById(R.id.tv_dashboard_scope_pill);
         donutChartView = view.findViewById(R.id.donut_chart_view);
         tvLegendFresh = view.findViewById(R.id.tv_legend_fresh);
         tvLegendExpiring = view.findViewById(R.id.tv_legend_expiring);
@@ -68,10 +80,20 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
 
         rvUseFirst = view.findViewById(R.id.rv_use_first);
         tvEmptyUseFirst = view.findViewById(R.id.tv_empty_use_first);
+        tvRecentlyAddedList = view.findViewById(R.id.tv_recently_added_list);
 
         rvUseFirst.setLayoutManager(new LinearLayoutManager(getContext()));
         useFirstAdapter = new UseFirstAdapter(requireContext(), this);
         rvUseFirst.setAdapter(useFirstAdapter);
+
+        // Scope selector click -> Household Management
+        tvScopePill.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getContext(), HouseholdActivity.class);
+                startActivity(intent);
+            }
+        });
 
         // See all inventory link
         view.findViewById(R.id.tv_see_all_inventory).setOnClickListener(new View.OnClickListener() {
@@ -92,33 +114,29 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             }
         });
 
-        // Quick action: Audit Inventory Service
-        view.findViewById(R.id.btn_action_audit).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent serviceIntent = new Intent(getContext(), InventoryAuditService.class);
-                requireContext().startService(serviceIntent);
-                Toast.makeText(getContext(), "Inventory Audit Service started", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Quick action: Food Scanner (Camera/ML Kit)
+        View btnScanner = view.findViewById(R.id.btn_action_scanner);
+        if (btnScanner != null) {
+            btnScanner.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(), FoodScannerActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
-        // Quick action: Cloud Sync
-        view.findViewById(R.id.btn_action_cloud_sync).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getContext(), CloudSyncActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        // Quick action: ContentProvider Demo
-        view.findViewById(R.id.btn_action_provider).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getContext(), ProviderDemoActivity.class);
-                startActivity(intent);
-            }
-        });
+        // Quick action: Meal Planner
+        View btnPlanner = view.findViewById(R.id.btn_action_planner);
+        if (btnPlanner != null) {
+            btnPlanner.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(), MealPlannerActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
         return view;
     }
@@ -126,16 +144,56 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
     @Override
     public void onResume() {
         super.onResume();
+        updateGreetingAndScope();
         loadDashboardData();
+    }
+
+    private void updateGreetingAndScope() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
+            tvGreeting.setText("Hello, " + user.getDisplayName());
+        } else if (user != null && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            String name = user.getEmail().split("@")[0];
+            tvGreeting.setText("Hello, " + name);
+        } else {
+            tvGreeting.setText("Welcome to FreshCheck");
+        }
+
+        String activeScope = householdRepository.getActiveHouseholdName();
+        tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "Personal Pantry");
     }
 
     public void loadDashboardData() {
         Log.d(TAG, "Loading dashboard metrics and priority items...");
-        int total = foodRepository.getTotalActiveCount();
-        int fresh = foodRepository.getFreshCount();
-        int expiringSoon = foodRepository.getExpiringSoonCount();
-        int expiresToday = foodRepository.getExpiresTodayCount();
-        int expired = foodRepository.getExpiredCount();
+        String activeHouseholdId = householdRepository.getActiveHouseholdId();
+        List<FoodItem> activeItems = foodRepository.getAllActive(activeHouseholdId);
+
+        int total = activeItems.size();
+        int fresh = 0;
+        int expiringSoon = 0;
+        int expiresToday = 0;
+        int expired = 0;
+
+        List<FoodItem> useFirstItems = new ArrayList<>();
+
+        for (FoodItem item : activeItems) {
+            String status = item.getStatus();
+            if (CategoryConstants.STATUS_FRESH.equals(status)) {
+                fresh++;
+            } else if (CategoryConstants.STATUS_EXPIRING_SOON.equals(status)) {
+                expiringSoon++;
+                useFirstItems.add(item);
+            } else if (CategoryConstants.STATUS_EXPIRES_TODAY.equals(status)) {
+                expiresToday++;
+                useFirstItems.add(item);
+            } else if (CategoryConstants.STATUS_EXPIRED.equals(status)) {
+                expired++;
+                useFirstItems.add(item);
+            }
+        }
+
+        // Sort Use First by remaining days ascending
+        useFirstItems.sort((o1, o2) -> Long.compare(o1.getDaysRemaining(), o2.getDaysRemaining()));
 
         // Update statistics cards
         tvStatTotal.setText(String.valueOf(total));
@@ -148,13 +206,11 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
 
         // Update Legends
         tvLegendFresh.setText("Fresh: " + fresh);
-        tvLegendExpiring.setText("Expiring Soon: " + (expiringSoon + expiresToday));
+        tvLegendExpiring.setText("Expiring: " + (expiringSoon + expiresToday));
         tvLegendExpired.setText("Expired: " + expired);
 
         // Update Use First Priority list
-        List<FoodItem> useFirstItems = foodRepository.getUseFirstItems();
         useFirstAdapter.setItems(useFirstItems);
-
         if (useFirstItems.isEmpty()) {
             rvUseFirst.setVisibility(View.GONE);
             tvEmptyUseFirst.setVisibility(View.VISIBLE);
@@ -162,13 +218,79 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             rvUseFirst.setVisibility(View.VISIBLE);
             tvEmptyUseFirst.setVisibility(View.GONE);
         }
+
+        // Update Recently Added Section
+        List<FoodItem> recentlyAdded = foodRepository.getRecentlyAdded(3);
+        if (recentlyAdded.isEmpty()) {
+            tvRecentlyAddedList.setText("No food items added yet.\nTap '+ Add Food' or '📷 Scan' above to record your first item.");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < recentlyAdded.size(); i++) {
+                FoodItem item = recentlyAdded.get(i);
+                sb.append("• ").append(item.getName())
+                        .append(" (").append(formatQuantity(item.getQuantity())).append(" ").append(item.getUnit()).append(")")
+                        .append(" — ").append(item.getStatus());
+                if (item.getDaysRemaining() >= 0) {
+                    sb.append(" (in ").append(item.getDaysRemaining()).append(" days)");
+                } else {
+                    sb.append(" (expired ").append(Math.abs(item.getDaysRemaining())).append(" days ago)");
+                }
+                if (i < recentlyAdded.size() - 1) {
+                    sb.append("\n");
+                }
+            }
+            tvRecentlyAddedList.setText(sb.toString());
+        }
+    }
+
+    private String formatQuantity(double qty) {
+        if (qty == (long) qty) {
+            return String.format(Locale.US, "%d", (long) qty);
+        } else {
+            return String.format(Locale.US, "%.1f", qty);
+        }
     }
 
     @Override
-    public void onQuickConsumed(FoodItem item) {
-        foodRepository.markConsumed(item.getId());
-        Toast.makeText(getContext(), item.getName() + " marked as consumed! Great job.", Toast.LENGTH_SHORT).show();
-        loadDashboardData();
+    public void onQuickConsumed(final FoodItem item) {
+        // Offer partial consumption dialog
+        final EditText etQty = new EditText(requireContext());
+        etQty.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etQty.setText(formatQuantity(item.getQuantity()));
+        etQty.setHint("Quantity consumed");
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Mark as Consumed")
+                .setMessage("Enter the quantity of '" + item.getName() + "' you consumed (" + item.getUnit() + "):")
+                .setView(etQty)
+                .setPositiveButton("Consume", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        double consumedQty = item.getQuantity();
+                        try {
+                            consumedQty = Double.parseDouble(etQty.getText().toString().trim());
+                        } catch (Exception ignored) {}
+
+                        if (consumedQty <= 0) {
+                            Toast.makeText(getContext(), "Invalid quantity", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        foodRepository.consumePartial(item.getId(), consumedQty);
+                        Toast.makeText(getContext(), "Consumed " + formatQuantity(consumedQty) + " " + item.getUnit() + " of " + item.getName(), Toast.LENGTH_SHORT).show();
+                        loadDashboardData();
+                    }
+                })
+                .setNeutralButton("Consume All", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        foodRepository.markConsumed(item.getId());
+                        Toast.makeText(getContext(), item.getName() + " finished! Saved from waste.", Toast.LENGTH_SHORT).show();
+                        loadDashboardData();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     @Override
@@ -231,7 +353,6 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
                         WasteRepository wasteRepo = new WasteRepository(requireContext());
                         WasteRecord customRecord = new WasteRecord(0, etName.getText().toString(),
                                 qty, unit, DateUtils.getTodayString(), reason, cost, notes);
-                        // markWasted already creates one, so update latest or let it persist
                         Toast.makeText(getContext(), "Recorded waste for " + item.getName(), Toast.LENGTH_SHORT).show();
                         loadDashboardData();
                     }

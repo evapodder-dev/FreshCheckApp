@@ -1,121 +1,148 @@
-# FreshCheck — Smart Food Management & Waste Reduction App
+# FreshCheck — Smart Food Management & Waste Reduction Application
 
-**FreshCheck** is a full-featured, modern Android Studio application built with **Java** and **XML**. It helps students, families, and individuals track food inventory, calculate expiry countdowns, reduce food waste, find recipes utilizing expiring ingredients, and organize grocery shopping.
+**FreshCheck** is an advanced, production-grade Android application built with **Java** and **Material Design 3 (XML)**. Designed for households, university students, and mess residents, FreshCheck helps monitor food inventory, calculate dynamic expiry countdowns, eliminate food waste, intelligently suggest recipes based on expiring ingredients, manage shared mess pantry supplies, track monthly grocery budgets in Bangladeshi Taka (৳), scan receipts with ML Kit OCR, and synchronize data across devices with Firebase.
 
-The project incorporates all foundational and advanced Android syllabus requirements, including Multi-Activity lifecycles, SQLite local storage, custom ContentProviders, ContentResolver queries, Started Services, BroadcastReceivers, WorkManager background workers, explicit and implicit Intents, custom Canvas Views, and Firebase Realtime Database cloud synchronization.
-
----
-
-## 📱 Features Overview
-
-### 1. Home Dashboard
-* **Dynamic Statistics**: Hardcode-free calculation of Total Active Items, Items Expiring Soon (1–3 days), Items Expiring Today (0 days), and Expired Items (< 0 days).
-* **Interactive Freshness Donut Gauge**: Custom View (`ExpiryStatusDonutView`) dynamically rendering real-time food freshness percentage and status distribution.
-* **Use First Priority Feed**: Instant access to urgent items with one-tap "Consumed" and "Waste" action buttons.
-* **Quick Access Actions**: Instant navigation to Add Food, Start Inventory Audit Service, Cloud Sync, and ContentProvider Demo.
-
-### 2. Food Inventory Management
-* **Comprehensive CRUD**: Add, view, edit, and delete food items with confirmation dialogs.
-* **Custom Food Cards**: MaterialCardView items displaying food name, quantity, unit, category, storage location, relative expiry countdown, and status badges.
-* **Real-Time Search**: Instant filtering by item name, notes, or storage location.
-* **Category & Status Filtering**: Filter items by Category (Produce, Dairy, Meat, Seafood, Bakery, Pantry, Frozen, Beverages, Other) and Status (All, Fresh, Expiring Soon, Expired).
-
-### 3. Expiry Tracking & Calculations
-* Calculates days remaining by comparing midnight-normalized dates (`Calendar` & `TimeUnit`).
-* 4 Distinct Visual Statuses:
-  * **Fresh** (> 3 days) — Green badge
-  * **Expiring Soon** (1 to 3 days) — Orange badge
-  * **Expires Today** (0 days) — Deep Orange badge
-  * **Expired** (< 0 days) — Red badge
-
-### 4. Background Expiry Notifications & Permissions
-* **Android 13+ Runtime Permission**: Handles `POST_NOTIFICATIONS` runtime requests gracefully.
-* **High-Priority Notification Channel**: Custom alerts with action intents leading directly to the inventory screen.
-* **WorkManager Integration**: `ExpiryCheckWorker` runs background checks every 24 hours.
-* **Boot Persistence**: `BootReceiver` restores background workers after device restarts.
-
-### 5. Priority "Use First" Workflow
-* Items expiring within 3 days are automatically prioritized.
-* **One-Tap Consumed**: Celebratory feedback, removes item from active inventory without penalizing waste statistics.
-* **Record Waste**: Moves item to waste history, tracking discard reason, financial loss, and notes.
-
-### 6. Smart Recipe Suggestions (Offline & Online)
-* **Inventory-Driven Suggestions**: Prioritizes recipes matching ingredients currently available and expiring in your pantry.
-* **12+ Curated Local Recipes**: Pre-packaged breakfast, lunch, dinner, and snack recipes functioning 100% offline.
-* **Live HTTP Requests & JSON Parsing**: `RecipeApiService` queries TheMealDB public REST API via `HttpURLConnection` on an `ExecutorService` background thread.
-* **Implicit Intents**: Direct options to share recipes via messaging apps or search video tutorials on YouTube/browser.
-
-### 7. Grocery Shopping List
-* Quick-add bar for items with quantity, unit, and category.
-* Interactive checkboxes for marking items as purchased with strike-through styling.
-* **Convert to Inventory**: One-click action to transition purchased shopping items into active pantry food items!
-* **Implicit Intent Sharing**: Shares formatted grocery list to SMS, WhatsApp, Email, or Notes.
-
-### 8. Food Waste Tracking & Financial Loss Analytics
-* Logs wasted items with date, quantity, reason (Spoiled, Past Expiry, Overcooked, Leftovers, Other), and estimated monetary value ($).
-* **Custom Canvas View (`WasteBreakdownChartView`)**: Custom-painted bar chart visualizing financial loss and percentage breakdown by waste reason.
-* Cumulative statistics tracking total wasted items and total financial loss.
-
-### 9. Firebase Realtime Database & Cloud Firestore Multi-Cloud Sync
-* **Dual Database Support**: Full synchronization with both **Firebase Realtime Database** and **Cloud Firestore**.
-* **User-Scoped Cloud Storage**: Automatically scopes inventory per authenticated user (`/users/{uid}/inventory`).
-* **Offline-First Resilience**: Works offline seamlessly using SQLite local storage when not connected to the cloud.
-
-### 10. Firebase Authentication & Social Sign-In
-* **Google Sign-In**: One-tap sign in using Google Play Services OAuth credential flow.
-* **Facebook OAuth Sign-In**: Seamless authentication with Facebook account.
-* **GitHub OAuth Sign-In**: Developer-friendly authentication with GitHub OAuth.
-* **Guest / Anonymous Sign-In**: Instant trial without requiring social accounts.
-* **Sign Out Option**: Clean session logout and credential revocation anytime.
-* **Dedicated Account Screen (`AuthActivity`)**: User profile badge, provider icon, display name, email, UID, and session management.
-* Cloud sync for uploading and downloading inventory to `/inventory`.
-* Full setup instructions provided in `FIREBASE_SETUP.md`.
+FreshCheck follows a strict **Offline-First Architecture**: all core features function seamlessly without an internet connection using local SQLite database storage. When network connectivity is available, data synchronizes with Firebase Cloud Firestore and Realtime Database.
 
 ---
 
-## 🎓 Syllabus Coverage & Implementation Map
+## 🚀 Key Modules & Capabilities
 
-| Syllabus Topic | Components Implemented | Class / File Reference |
+### 1. Interactive Dashboard & Expiry Metrics
+* **Hardcode-Free Expiry Calculation**: Dynamically computes Total Active Items, Fresh Food (>3 days), Expiring Soon (1–3 days), Expires Today (0 days), and Expired (<0 days).
+* **Interactive Freshness Donut Chart**: Custom View (`ExpiryStatusDonutView`) dynamically rendering real-time food freshness percentages and status distributions via Android Canvas and Paint.
+* **Use First Priority Section**: Automatically prioritizes food items approaching their expiration dates with immediate one-tap partial or full consumption and waste logging.
+* **Scope Selector**: Effortlessly switch between Personal Pantry and Shared Household/Mess scope directly from the dashboard header.
+* **Recently Added Stream**: Dynamic audit trail of newly recorded pantry supplies.
+
+### 2. Comprehensive Food Inventory Management
+* **Full CRUD Operations**: Create, Read, Update, and Delete food records with verification dialogs.
+* **Dynamic Status Classification**:
+  * **Fresh**: > 3 days remaining.
+  * **Expiring Soon**: 1–3 days remaining.
+  * **Expires Today**: 0 days remaining.
+  * **Expired**: Negative days remaining.
+* **Multi-Criteria Filtering & Sorting**: Filter by Category (Vegetables, Fruits, Dairy, Meat, Fish, Bakery, Grains, Beverages, Snacks, Others), Storage Location (Refrigerator, Freezer, Pantry, Kitchen Shelf, Drawer, Other), and Sort by Expiry Date (Earliest/Latest), Alphabetical (A-Z/Z-A), or Recently Added.
+* **Detailed Inspection Modal**: View complete metadata, notes, photo thumbnail, price in Taka (৳), and storage zone.
+
+### 3. Shared Household & Mess Inventory
+* **Mess/Household Creation**: Create a shared household or mess and automatically generate a unique join code (e.g., `MESS-8X2K`).
+* **Invitation System**: Join any shared household by typing the invite code.
+* **Role-Based Membership**: Supports Admin and Member roles.
+* **Shared Real-Time Feeds**: Multi-user inventory, shared grocery lists, and persistent member activity audit logs.
+* **Guest Compatibility**: Guest and anonymous users can use the personal inventory freely without joining a mess.
+
+### 4. Smart Meal Planner
+* **Weekly Calendar (Monday–Sunday)**: Plan Breakfast, Lunch, Dinner, and Snack slots for every day of the week.
+* **Ingredient Availability Status**: Evaluates whether planned meal ingredients are currently in stock or expiring.
+* **Automated Grocery Generation**: One-tap "Add Missing Ingredients to Grocery List" scans weekly meals against the pantry and automatically populates the grocery list with missing items.
+
+### 5. Food Image Scanner (ML Kit)
+* **On-Device Vision Recognition**: Uses Google ML Kit Image Labeling via Camera and Gallery.
+* **Heuristic Food Taxonomy**: Maps detected labels to food categories (Fruits, Dairy, Meat, Bakery, Vegetables, etc.).
+* **Safety Confirmation Protocol**: Never invents expiration dates; presents detected labels in an interactive dialog for user verification before persisting.
+
+### 6. Grocery Receipt OCR Scanner (ML Kit)
+* **Text Recognition**: Uses Google ML Kit Text Recognition to parse grocery slips and receipts.
+* **Intelligent Item & Price Extraction**: Regex-based heuristic parser separates product descriptions and prices in Taka (`৳`).
+* **Direct Import**: Imports recognized receipt lines directly into the active grocery shopping list.
+
+### 7. Budget & Financial Savings Tracker
+* **Currency in Bangladeshi Taka (৳)**: Default currency across all financial modules.
+* **Monthly Budget Tracking**: Set monthly grocery spending targets with an interactive visual progress gauge.
+* **Financial Loss vs. Net Savings**: Real-time calculation of Grocery Expenses, Recorded Food Waste Loss, and Estimated Net Savings.
+
+### 8. Partial Consumption & Restocking Analytics
+* **Partial Consumption**: Allows consuming fractional portions (e.g., consuming 0.5 kg of 1.0 kg) while updating remaining stock and recording consumption history.
+* **Usage Frequency Analytics**: Identifies frequently consumed staples versus rarely used items to optimize restocking recommendations.
+
+### 9. Smart Recipe Suggestions & Ingredient Match Algorithm
+* **Intelligent Recipe Matcher**: Compares recipe ingredients against available pantry stock, calculating exact Match Percentage (`90% Match`), available ingredients, and missing ingredients.
+* **Expiring Ingredient Priority**: Recipes that utilize ingredients nearing expiration are awarded top priority badges (`🔥 Uses Expiring Ingredients`).
+* **12+ Curated Offline Recipes**: Structured into Breakfast, Lunch, Dinner, and Snacks.
+* **TheMealDB REST API**: Fetches live online recipes with cooking instructions and video links, backed by graceful offline fallbacks.
+
+### 10. Smart Grocery Shopping List
+* **Quick-Add Interface**: Add grocery items with quantity, unit, and category.
+* **Purchase Strike-Through**: Check off items as purchased in real time.
+* **Verified Inventory Transfer**: One-tap transfer from grocery list to pantry inventory with mandatory expiration date confirmation (no invented expiry dates).
+* **Implicit Intent Sharing**: Share grocery lists via SMS, WhatsApp, Email, or Notes.
+
+### 11. Food Waste Challenge & Gamification
+* **Food Saver Score (0–100)**: Evaluates pantry utilization, consumption ratio, and waste prevention.
+* **Achievement Badges**: Unlock tiers such as "Zero-Waste Master", "Pantry Champion", "Smart Shopper", and "Budget Guardian".
+* **Weekly Waste Challenges**: Interactive checklist of actionable habits to reduce spoilage.
+
+### 12. Smart Food Storage Guide
+* **Curated Category Advice**: Storage tips for Vegetables, Fruits, Dairy, Meat, Fish, and Bakery items.
+* **Refrigerator Temperature Zones**: Interactive breakdown of optimal placement (Upper Shelf, Middle Shelf, Crisper Drawer, Door Shelves).
+* **Food Safety Disclaimer**: Clear distinction between general storage tips and guaranteed food safety.
+
+### 13. Data Export & Backup
+* **CSV Inventory Export**: Export active inventory to standard CSV format.
+* **CSV Waste Report**: Export historical waste records for external analysis.
+* **JSON Backup & Restore**: Full local snapshot export and validation-checked restore.
+
+### 14. Firebase Multi-Cloud Sync & Social Authentication
+* **Dual Cloud Support**: Synchronizes with both **Firebase Cloud Firestore** and **Firebase Realtime Database**.
+* **Authentication Providers**: Google Sign-In, Facebook OAuth, GitHub OAuth, and Anonymous/Guest Sign-In.
+* **User-Scoped Security**: Isolate and secure inventory data per authenticated user (`/users/{uid}/inventory`).
+
+---
+
+## 🏛️ Architecture & Android Syllabus Coverage
+
+| Syllabus Topic | Implemented Component | Class / File Reference |
 | :--- | :--- | :--- |
-| **Project Architecture & Gradle** | Standard Gradle structure, AGP 9.4+, Java 11, dependencies | `build.gradle`, `app/build.gradle`, `settings.gradle` |
-| **Manifest & Permissions** | Permissions (`INTERNET`, `POST_NOTIFICATIONS`, `BOOT_COMPLETED`), 5 Activities, 1 Service, 3 Receivers, 1 Provider | `app/src/main/AndroidManifest.xml` |
-| **Multiple Activities** | 5 Activities with explicit intents & extras | `MainActivity`, `AddEditFoodActivity`, `RecipeDetailActivity`, `ProviderDemoActivity`, `CloudSyncActivity` |
-| **Activity Lifecycles** | Lifecycle callbacks with Logcat output (`onCreate`, `onStart`, `onResume`, `onPause`, `onStop`, `onDestroy`) | All 5 Activity classes |
-| **XML Layouts & Material UI** | ConstraintLayout, CoordinatorLayout, NestedScrollView, MaterialCardView, Chips | `res/layout/*.xml`, `res/values/themes.xml`, `colors.xml` |
-| **RecyclerView & Adapters** | 4 Adapters with custom ViewHolders & card layouts | `FoodAdapter`, `UseFirstAdapter`, `ShoppingAdapter`, `WasteAdapter`, `RecipeAdapter` |
-| **Custom Views (Canvas & Paint)** | 2 Custom Views implementing `onMeasure()` and `onDraw()` | `ExpiryStatusDonutView.java`, `WasteBreakdownChartView.java` |
-| **Local Database (SQLite)** | `SQLiteOpenHelper`, DAOs/Repositories, CRUD operations | `DatabaseHelper.java`, `FoodRepository.java`, `ShoppingRepository.java`, `WasteRepository.java` |
-| **ContentProvider** | Custom Provider with `UriMatcher`, MIME types, CRUD | `FoodContentProvider.java` (`content://com.freshcheck.app.provider/food_items`) |
-| **ContentResolver** | ContentResolver querying & inserting with raw Cursor inspection | `ProviderDemoActivity.java` |
-| **Started Service** | Background inventory audit service running on thread pool | `InventoryAuditService.java` |
-| **BroadcastReceivers** | Alarm receiver, audit completion receiver, device boot receiver | `ExpiryAlarmReceiver.java`, `InventoryAuditReceiver.java`, `BootReceiver.java` |
-| **Background WorkManager** | Periodic background worker for expiry inspections | `ExpiryCheckWorker.java`, `WorkManagerScheduler.java` |
-| **Explicit Intents** | Navigating between activities with bundles and object serialization | `MainActivity`, `AddEditFoodActivity`, `RecipeDetailActivity` |
-| **Implicit Intents** | Sharing shopping list, sharing recipes (`ACTION_SEND`), opening video tutorials (`ACTION_VIEW`) | `ShoppingFragment.java`, `RecipeDetailActivity.java` |
-| **Networking & JSON Parsing** | `HttpURLConnection`, `JSONObject`, `JSONArray`, background executor | `RecipeApiService.java` (TheMealDB REST API) |
-| **Cloud Database (Firebase)** | Firebase Realtime Database backup/restore with offline fallback | `FirebaseManager.java`, `CloudSyncActivity.java` |
+| **Architectural Pattern** | Offline-First Repository Pattern with Multi-Activity & Fragments | `com.freshcheck.app.*` |
+| **Local Database (SQLite)** | 9 Relational Tables with Indexes, Transactions & Migration | `DatabaseHelper.java` (Version 2) |
+| **Data Repositories** | Decoupled Data Access Objects | `FoodRepository`, `HouseholdRepository`, `MealPlanRepository`, `ShoppingRepository`, `WasteRepository`, `ConsumptionRepository`, `BudgetRepository` |
+| **Machine Learning (ML Kit)** | On-Device Vision Labeling & Text OCR | `FoodScannerActivity`, `ReceiptScannerActivity` |
+| **ContentProvider** | Custom Provider with MIME types & URI Matcher | `FoodContentProvider.java` (`content://com.freshcheck.app.provider/food_items`) |
+| **ContentResolver** | ContentResolver inspection & CRUD demonstration | `ProviderDemoActivity.java` |
+| **Background WorkManager** | Periodic 24h background expiry audit | `ExpiryCheckWorker.java`, `WorkManagerScheduler.java` |
+| **Started Services** | Asynchronous inventory audit service | `InventoryAuditService.java` |
+| **BroadcastReceivers** | Alarm triggers, audit broadcast, boot rescheduling | `ExpiryAlarmReceiver`, `InventoryAuditReceiver`, `BootReceiver` |
+| **Custom Canvas Views** | Custom-painted views implementing `onMeasure()` and `onDraw()` | `ExpiryStatusDonutView.java`, `WasteBreakdownChartView.java` |
+| **Implicit Intents** | System share sheet (`ACTION_SEND`), video tutorial link (`ACTION_VIEW`) | `ShoppingFragment`, `RecipeDetailActivity`, `BackupRestoreManager` |
+| **Network & REST API** | HTTP requests via `HttpURLConnection` & JSON parsing | `RecipeApiService.java` (TheMealDB API) |
+| **Cloud Synchronization** | Cloud Firestore & Realtime Database sync | `FirebaseManager.java`, `CloudSyncActivity.java` |
+| **Authentication** | Google, Facebook, GitHub, Anonymous, Sign Out | `AuthActivity.java`, `FirebaseAuth` |
 
 ---
 
-## 🛠️ How to Open, Build, and Run in Android Studio
+## 🛠️ Database Schema (SQLite Version 2)
 
-1. **Open Android Studio** (Hedgehog, Iguana, Jellyfish, Koala, Ladybug, or newer).
-2. Select **File > Open...** and choose the `FreshCheckApp` directory.
-3. Allow Android Studio to complete Gradle sync.
-4. Select an Android Emulator or connected physical device (running Android 7.0 / API 24 or higher).
-5. Click the green **Run 'app'** button (`Shift + F10`).
+FreshCheck utilizes 9 indexed SQLite tables:
+1. `food_items`: Pantry inventory records with expiration dates, quantities, categories, storage locations, photos, and household scoping.
+2. `shopping_items`: Grocery shopping items with purchase states and estimated costs.
+3. `waste_records`: Discarded food records with loss values in Taka (৳), discard reasons, and notes.
+4. `consumption_records`: Partial and full consumption events with quantities and timestamps.
+5. `meal_plans`: 7-day calendar plans mapped to recipes and meal slots (Breakfast, Lunch, Dinner, Snack).
+6. `households`: Shared household/mess groups with unique `MESS-XXXX` join codes.
+7. `household_members`: Association table linking users to households with role definitions (Admin/Member).
+8. `activity_logs`: Chronological audit trail of household events.
+9. `budget_settings`: Monthly grocery budget allocations in Bangladeshi Taka (৳).
 
 ---
 
-## 🧪 Testing Checklist
+## 📱 How to Build and Run
 
-- [ ] **Home Dashboard**: Confirm that counter numbers reflect items in database.
-- [ ] **Donut Chart**: Observe donut chart segments change as food statuses update.
-- [ ] **Add Food**: Tap `+ Add Food`, select dates via DatePicker, pick category and location, and save.
-- [ ] **Inventory Filter**: Test searching for "Milk" and switching status chips ("Expiring Soon", "Expired").
-- [ ] **Use First Priority**: On dashboard, tap "Consumed" to mark an item eaten or "Waste" to record discard.
-- [ ] **Recipe Suggestions**: Open Recipes tab. Observe local recipes matching inventory ingredients. Tap "Online API" to fetch live recipes from TheMealDB.
-- [ ] **Shopping List**: Add groceries, check items off, and tap "Share" to test the implicit Intent.
-- [ ] **ContentProvider Demo**: From toolbar menu, select **ContentProvider Demo**. Tap "Query via ContentResolver" to view live Cursor records.
-- [ ] **Inventory Audit Service**: From toolbar menu, tap the audit icon to run the background service and observe completion toast/notification.
-- [ ] **Waste Analytics**: Open Waste tab to inspect total financial loss and the custom `WasteBreakdownChartView`.
+### Prerequisites
+* **Android Studio** Ladybug or newer
+* **JDK 17 or bundled Android Studio JBR (Java 25)**
+* **Android SDK**: Min SDK 24 (Android 7.0), Target SDK 34 (Android 14)
+
+### Building via Command Line
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+cd FreshCheckApp
+.\gradlew.bat assembleDebug
+```
+The compiled debug APK will be generated at:
+`app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## 📄 License
+Developed for the university-level Advanced Android Development project. All rights reserved.

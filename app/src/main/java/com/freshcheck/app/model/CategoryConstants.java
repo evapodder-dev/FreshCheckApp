@@ -3,36 +3,43 @@ package com.freshcheck.app.model;
 public final class CategoryConstants {
     private CategoryConstants() {}
 
+    public static final String CURRENCY_SYMBOL = "৳";
+
+    // Standard Categories per specification
     public static final String[] CATEGORIES = {
-            "Produce (Fruits & Veg)",
-            "Dairy & Eggs",
-            "Meat & Poultry",
-            "Seafood",
-            "Bakery & Bread",
-            "Pantry & Dry Goods",
-            "Frozen Foods",
+            "Vegetables",
+            "Fruits",
+            "Dairy",
+            "Meat",
+            "Fish",
+            "Bakery",
+            "Grains",
             "Beverages",
-            "Other"
+            "Snacks",
+            "Others"
     };
 
+    // Standard Storage Locations per specification
     public static final String[] STORAGE_LOCATIONS = {
             "Refrigerator",
             "Freezer",
             "Pantry",
-            "Countertop"
+            "Kitchen Shelf",
+            "Drawer",
+            "Other"
     };
 
     public static final String[] UNITS = {
             "items",
             "kg",
             "g",
-            "lbs",
-            "oz",
             "liters",
             "ml",
             "packs",
             "bottles",
-            "cans"
+            "cans",
+            "lbs",
+            "oz"
     };
 
     public static final String[] WASTE_REASONS = {
@@ -41,6 +48,13 @@ public final class CategoryConstants {
             "Overcooked / Burned",
             "Uneaten Leftover",
             "Other / Accidental"
+    };
+
+    public static final String[] MEAL_TYPES = {
+            "Breakfast",
+            "Lunch",
+            "Dinner",
+            "Snack"
     };
 
     public static final String STATUS_FRESH = "FRESH";

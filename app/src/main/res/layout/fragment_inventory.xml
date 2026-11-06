@@ -31,8 +31,9 @@
 
             <EditText
                 android:id="@+id/et_search_food"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:background="@null"
                 android:hint="@string/search_hint"
@@ -40,31 +41,41 @@
                 android:textColorHint="@color/text_hint"
                 android:textSize="14sp"
                 android:singleLine="true" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sort_inventory"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="⇅ Sort"
+                android:textColor="@color/primary"
+                android:textSize="12sp"
+                android:paddingHorizontal="8dp" />
         </LinearLayout>
 
-        <!-- Category & Filter Row -->
+        <!-- Category & Location Filter Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Category:"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/spinner_category_filter"
                 android:layout_width="0dp"
                 android:layout_height="38dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/bg_search_bar" />
+
+            <Spinner
+                android:id="@+id/spinner_location_filter"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
                 android:background="@drawable/bg_search_bar" />
         </LinearLayout>
 
@@ -72,7 +83,7 @@
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="6dp"
             android:scrollbars="none"
             android:paddingHorizontal="12dp">
 

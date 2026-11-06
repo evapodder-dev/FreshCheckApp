@@ -27,16 +27,32 @@
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toStartOf="@id/tv_recipe_match_badge" />
+
+        <TextView
+            android:id="@+id/tv_recipe_match_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge_fresh"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="85% Match"
+            android:textColor="@color/primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:id="@+id/layout_recipe_meta"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintTop_toBottomOf="@id/tv_recipe_title"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/tv_recipe_category"
@@ -67,6 +83,20 @@
                 android:text="• Easy"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_recipe_expiring_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_badge_expiring"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="🔥 Uses Expiring"
+                android:textColor="@color/status_expiring"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView
@@ -83,6 +113,18 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
+            android:id="@+id/tv_recipe_missing_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Missing: Cinnamon"
+            android:textColor="@color/status_expiring"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tv_recipe_ingredients_preview"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
             android:id="@+id/tv_view_recipe_action"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -91,7 +133,7 @@
             android:textColor="@color/primary"
             android:textSize="13sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/tv_recipe_ingredients_preview"
+            app:layout_constraintTop_toBottomOf="@id/tv_recipe_missing_preview"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 

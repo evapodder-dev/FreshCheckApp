@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permissions -->
+    <!-- Network & Push Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Camera & Storage for ML Kit Scanners -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -36,6 +44,46 @@
         <!-- Recipe Detail Activity -->
         <activity
             android:name=".ui.activity.RecipeDetailActivity"
+            android:exported="false" />
+
+        <!-- Household / Mess Activity -->
+        <activity
+            android:name=".ui.activity.HouseholdActivity"
+            android:exported="false" />
+
+        <!-- Meal Planner Activity -->
+        <activity
+            android:name=".ui.activity.MealPlannerActivity"
+            android:exported="false" />
+
+        <!-- Budget & Savings Tracker Activity -->
+        <activity
+            android:name=".ui.activity.BudgetTrackerActivity"
+            android:exported="false" />
+
+        <!-- Smart Storage Guide Activity -->
+        <activity
+            android:name=".ui.activity.StorageGuideActivity"
+            android:exported="false" />
+
+        <!-- Waste Challenge Gamification Activity -->
+        <activity
+            android:name=".ui.activity.WasteChallengeActivity"
+            android:exported="false" />
+
+        <!-- Food Habit Analytics Activity -->
+        <activity
+            android:name=".ui.activity.AnalyticsActivity"
+            android:exported="false" />
+
+        <!-- Food Image Scanner Activity (ML Kit) -->
+        <activity
+            android:name=".ui.activity.FoodScannerActivity"
+            android:exported="false" />
+
+        <!-- Receipt OCR Scanner Activity (ML Kit) -->
+        <activity
+            android:name=".ui.activity.ReceiptScannerActivity"
             android:exported="false" />
 
         <!-- ContentProvider & Resolver Demo Activity -->

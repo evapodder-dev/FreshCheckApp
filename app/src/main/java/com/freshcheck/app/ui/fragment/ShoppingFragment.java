@@ -1,5 +1,8 @@
 package com.freshcheck.app.ui.fragment;
 
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -19,12 +23,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.freshcheck.app.R;
+import com.freshcheck.app.database.FoodRepository;
+import com.freshcheck.app.database.HouseholdRepository;
 import com.freshcheck.app.database.ShoppingRepository;
 import com.freshcheck.app.model.CategoryConstants;
+import com.freshcheck.app.model.FoodItem;
 import com.freshcheck.app.model.ShoppingItem;
+import com.freshcheck.app.ui.activity.ReceiptScannerActivity;
 import com.freshcheck.app.ui.adapter.ShoppingAdapter;
+import com.freshcheck.app.util.DateUtils;
 
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShoppingItemActionListener {
     private static final String TAG = "ShoppingFragment";
@@ -37,6 +50,8 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
 
     private ShoppingAdapter adapter;
     private ShoppingRepository repository;
+    private FoodRepository foodRepository;
+    private HouseholdRepository householdRepository;
 
     @Nullable
     @Override
@@ -44,6 +59,8 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_shopping, container, false);
         repository = new ShoppingRepository(requireContext());
+        foodRepository = new FoodRepository(requireContext());
+        householdRepository = new HouseholdRepository(requireContext());
 
         etName = view.findViewById(R.id.et_shopping_name);
         etQty = view.findViewById(R.id.et_shopping_qty);
@@ -66,6 +83,18 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
                 addItem();
             }
         });
+
+        // Scan receipt button
+        View btnReceipt = view.findViewById(R.id.btn_scan_receipt);
+        if (btnReceipt != null) {
+            btnReceipt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(), ReceiptScannerActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
         // Share button - Implicit Intent
         view.findViewById(R.id.btn_share_shopping).setOnClickListener(new View.OnClickListener() {
@@ -96,6 +125,12 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item, CategoryConstants.CATEGORIES);
         spCategory.setAdapter(catAdapter);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadShoppingItems();
     }
 
     private void loadShoppingItems() {
@@ -163,12 +198,115 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
     }
 
     @Override
-    public void onMoveToInventory(ShoppingItem item) {
-        boolean success = repository.moveToInventory(item.getId());
-        if (success) {
-            Toast.makeText(getContext(), item.getName() + " moved to Food Inventory!", Toast.LENGTH_SHORT).show();
-            loadShoppingItems();
-        }
+    public void onMoveToInventory(final ShoppingItem item) {
+        // Show confirmation dialog: Never invent expiration dates! Prompt user for actual expiry & location.
+        showTransferToInventoryDialog(item);
+    }
+
+    private void showTransferToInventoryDialog(final ShoppingItem item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Transfer to Food Inventory");
+
+        // Simple customized layout programmatically
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+
+        TextView tvDesc = new TextView(requireContext());
+        tvDesc.setText("Set actual package expiry date and storage location for " + item.getName() + ":");
+        tvDesc.setTextColor(getResources().getColor(R.color.text_secondary));
+        layout.addView(tvDesc);
+
+        // Expiry Date Button
+        final TextView tvExpiryBtn = new TextView(requireContext());
+        final String[] chosenExpiry = {DateUtils.getFutureDateString(5)};
+        tvExpiryBtn.setText("📅 Expiration Date: " + chosenExpiry[0]);
+        tvExpiryBtn.setPadding(20, 24, 20, 24);
+        tvExpiryBtn.setBackgroundResource(R.drawable.bg_search_bar);
+        tvExpiryBtn.setTextColor(getResources().getColor(R.color.primary));
+        android.widget.LinearLayout.LayoutParams lpDate = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpDate.topMargin = 16;
+        layout.addView(tvExpiryBtn, lpDate);
+
+        tvExpiryBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Date d = DateUtils.parseDate(chosenExpiry[0]);
+                Calendar c = Calendar.getInstance();
+                c.setTime(d);
+                new DatePickerDialog(requireContext(), new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        Calendar nc = Calendar.getInstance();
+                        nc.set(year, month, dayOfMonth);
+                        chosenExpiry[0] = DateUtils.getDateFormat().format(nc.getTime());
+                        tvExpiryBtn.setText("📅 Expiration Date: " + chosenExpiry[0]);
+                    }
+                }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+        // Location Spinner
+        TextView tvLocLabel = new TextView(requireContext());
+        tvLocLabel.setText("Storage Location:");
+        tvLocLabel.setPadding(0, 16, 0, 4);
+        layout.addView(tvLocLabel);
+
+        final Spinner spLoc = new Spinner(requireContext());
+        ArrayAdapter<String> locAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, CategoryConstants.STORAGE_LOCATIONS);
+        spLoc.setAdapter(locAdapter);
+        spLoc.setBackgroundResource(R.drawable.bg_search_bar);
+        layout.addView(spLoc);
+
+        // Purchase Cost
+        final EditText etPrice = new EditText(requireContext());
+        etPrice.setHint("Purchase Price (৳ Taka)");
+        etPrice.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etPrice.setText(item.getEstimatedCost() > 0 ? String.format(Locale.US, "%.1f", item.getEstimatedCost()) : "");
+        etPrice.setBackgroundResource(R.drawable.bg_search_bar);
+        etPrice.setPadding(20, 20, 20, 20);
+        android.widget.LinearLayout.LayoutParams lpPrice = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lpPrice.topMargin = 16;
+        layout.addView(etPrice, lpPrice);
+
+        builder.setView(layout);
+        builder.setPositiveButton("Transfer", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                double cost = 0.0;
+                try {
+                    cost = Double.parseDouble(etPrice.getText().toString().trim());
+                } catch (Exception ignored) {}
+
+                String loc = spLoc.getSelectedItem().toString();
+                String activeHouseholdId = householdRepository.getActiveHouseholdId();
+
+                FoodItem foodItem = new FoodItem();
+                foodItem.setName(item.getName());
+                foodItem.setQuantity(item.getQuantity());
+                foodItem.setUnit(item.getUnit());
+                foodItem.setCategory(item.getCategory());
+                foodItem.setPurchaseDate(DateUtils.getTodayString());
+                foodItem.setExpiryDate(chosenExpiry[0]);
+                foodItem.setLocation(loc);
+                foodItem.setEstimatedCost(cost);
+                foodItem.setNotes(item.getNotes());
+                if (activeHouseholdId != null && !activeHouseholdId.isEmpty()) {
+                    foodItem.setHouseholdId(activeHouseholdId);
+                }
+
+                foodRepository.insert(foodItem);
+                repository.delete(item.getId());
+
+                Toast.makeText(getContext(), item.getName() + " transferred to inventory! Track freshness in Dashboard.", Toast.LENGTH_SHORT).show();
+                loadShoppingItems();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, null);
+        builder.show();
     }
 
     @Override

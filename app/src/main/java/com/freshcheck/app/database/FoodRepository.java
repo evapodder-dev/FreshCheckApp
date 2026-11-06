@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.freshcheck.app.model.CategoryConstants;
+import com.freshcheck.app.model.ConsumptionRecord;
 import com.freshcheck.app.model.FoodItem;
 import com.freshcheck.app.model.WasteRecord;
 import com.freshcheck.app.util.DateUtils;
@@ -18,6 +19,13 @@ import java.util.List;
 
 public class FoodRepository {
     private static final String TAG = "FoodRepository";
+
+    public static final int SORT_EXPIRY_ASC = 0;
+    public static final int SORT_EXPIRY_DESC = 1;
+    public static final int SORT_NAME_ASC = 2;
+    public static final int SORT_NAME_DESC = 3;
+    public static final int SORT_RECENTLY_ADDED = 4;
+
     private final DatabaseHelper dbHelper;
 
     public FoodRepository(Context context) {
@@ -26,6 +34,11 @@ public class FoodRepository {
 
     public long insert(FoodItem item) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
+        if (item.getCreatedTimestamp() == 0) {
+            item.setCreatedTimestamp(System.currentTimeMillis());
+        }
+        item.setUpdatedTimestamp(System.currentTimeMillis());
+
         ContentValues values = item.toContentValues();
         long id = db.insert(DatabaseHelper.TABLE_FOOD_ITEMS, null, values);
         item.setId(id);
@@ -35,6 +48,7 @@ public class FoodRepository {
 
     public int update(FoodItem item) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
+        item.setUpdatedTimestamp(System.currentTimeMillis());
         ContentValues values = item.toContentValues();
         int rows = db.update(DatabaseHelper.TABLE_FOOD_ITEMS, values,
                 DatabaseHelper.COL_FOOD_ID + " = ?",
@@ -70,14 +84,47 @@ public class FoodRepository {
     }
 
     public List<FoodItem> getAllActive() {
+        return getAllActive(null);
+    }
+
+    public List<FoodItem> getAllActive(String householdId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         List<FoodItem> list = new ArrayList<>();
         String selection = DatabaseHelper.COL_FOOD_IS_CONSUMED + " = 0 AND "
                 + DatabaseHelper.COL_FOOD_IS_WASTED + " = 0";
+        String[] selectionArgs = null;
+
+        if (householdId != null && !householdId.isEmpty()) {
+            selection += " AND " + DatabaseHelper.COL_FOOD_HOUSEHOLD_ID + " = ?";
+            selectionArgs = new String[]{householdId};
+        } else if (householdId != null) {
+            selection += " AND (" + DatabaseHelper.COL_FOOD_HOUSEHOLD_ID + " IS NULL OR "
+                    + DatabaseHelper.COL_FOOD_HOUSEHOLD_ID + " = '' )";
+        }
+
         String orderBy = DatabaseHelper.COL_FOOD_EXPIRY_DATE + " ASC";
 
         Cursor cursor = db.query(DatabaseHelper.TABLE_FOOD_ITEMS, null,
-                selection, null, null, null, orderBy);
+                selection, selectionArgs, null, null, orderBy);
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                list.add(cursorToFoodItem(cursor));
+            }
+            cursor.close();
+        }
+        return list;
+    }
+
+    public List<FoodItem> getRecentlyAdded(int limit) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        List<FoodItem> list = new ArrayList<>();
+        String selection = DatabaseHelper.COL_FOOD_IS_CONSUMED + " = 0 AND "
+                + DatabaseHelper.COL_FOOD_IS_WASTED + " = 0";
+        String orderBy = DatabaseHelper.COL_FOOD_ID + " DESC";
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_FOOD_ITEMS, null,
+                selection, null, null, null, orderBy, String.valueOf(limit));
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -89,20 +136,29 @@ public class FoodRepository {
     }
 
     public List<FoodItem> searchAndFilter(String query, String category, String statusFilter) {
+        return searchAndFilter(query, category, statusFilter, "All", SORT_EXPIRY_ASC);
+    }
+
+    public List<FoodItem> searchAndFilter(String query, String category, String statusFilter,
+                                         String locationFilter, int sortMode) {
         List<FoodItem> allActive = getAllActive();
         List<FoodItem> filtered = new ArrayList<>();
 
         String q = query != null ? query.trim().toLowerCase() : "";
         boolean filterCategory = category != null && !category.equalsIgnoreCase("All") && !category.trim().isEmpty();
         boolean filterStatus = statusFilter != null && !statusFilter.equalsIgnoreCase("All") && !statusFilter.trim().isEmpty();
+        boolean filterLocation = locationFilter != null && !locationFilter.equalsIgnoreCase("All") && !locationFilter.trim().isEmpty();
 
         for (FoodItem item : allActive) {
             boolean matchesQuery = q.isEmpty()
                     || item.getName().toLowerCase().contains(q)
                     || item.getNotes().toLowerCase().contains(q)
-                    || item.getLocation().toLowerCase().contains(q);
+                    || item.getLocation().toLowerCase().contains(q)
+                    || item.getCategory().toLowerCase().contains(q);
 
             boolean matchesCategory = !filterCategory || item.getCategory().equalsIgnoreCase(category);
+
+            boolean matchesLocation = !filterLocation || item.getLocation().equalsIgnoreCase(locationFilter);
 
             boolean matchesStatus = true;
             if (filterStatus) {
@@ -116,10 +172,56 @@ public class FoodRepository {
                 }
             }
 
-            if (matchesQuery && matchesCategory && matchesStatus) {
+            if (matchesQuery && matchesCategory && matchesStatus && matchesLocation) {
                 filtered.add(item);
             }
         }
+
+        // Apply Sorting
+        switch (sortMode) {
+            case SORT_EXPIRY_DESC:
+                Collections.sort(filtered, new Comparator<FoodItem>() {
+                    @Override
+                    public int compare(FoodItem o1, FoodItem o2) {
+                        return Long.compare(o2.getDaysRemaining(), o1.getDaysRemaining());
+                    }
+                });
+                break;
+            case SORT_NAME_ASC:
+                Collections.sort(filtered, new Comparator<FoodItem>() {
+                    @Override
+                    public int compare(FoodItem o1, FoodItem o2) {
+                        return o1.getName().compareToIgnoreCase(o2.getName());
+                    }
+                });
+                break;
+            case SORT_NAME_DESC:
+                Collections.sort(filtered, new Comparator<FoodItem>() {
+                    @Override
+                    public int compare(FoodItem o1, FoodItem o2) {
+                        return o2.getName().compareToIgnoreCase(o1.getName());
+                    }
+                });
+                break;
+            case SORT_RECENTLY_ADDED:
+                Collections.sort(filtered, new Comparator<FoodItem>() {
+                    @Override
+                    public int compare(FoodItem o1, FoodItem o2) {
+                        return Long.compare(o2.getId(), o1.getId());
+                    }
+                });
+                break;
+            case SORT_EXPIRY_ASC:
+            default:
+                Collections.sort(filtered, new Comparator<FoodItem>() {
+                    @Override
+                    public int compare(FoodItem o1, FoodItem o2) {
+                        return Long.compare(o1.getDaysRemaining(), o2.getDaysRemaining());
+                    }
+                });
+                break;
+        }
+
         return filtered;
     }
 
@@ -178,14 +280,55 @@ public class FoodRepository {
     }
 
     public boolean markConsumed(long id) {
+        FoodItem item = getById(id);
+        if (item == null) return false;
+        return consumePartial(id, item.getQuantity());
+    }
+
+    /**
+     * Consumes partial or full quantity of an item.
+     * Records an entry into consumption_records without losing item tracking.
+     */
+    public boolean consumePartial(long id, double consumedQuantity) {
+        FoodItem item = getById(id);
+        if (item == null || consumedQuantity <= 0) return false;
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues cv = new ContentValues();
-        cv.put(DatabaseHelper.COL_FOOD_IS_CONSUMED, 1);
-        int rows = db.update(DatabaseHelper.TABLE_FOOD_ITEMS, cv,
-                DatabaseHelper.COL_FOOD_ID + " = ?",
-                new String[]{String.valueOf(id)});
-        Log.d(TAG, "Food item id " + id + " marked consumed: " + (rows > 0));
-        return rows > 0;
+        db.beginTransaction();
+        try {
+            double remainingQty = item.getQuantity() - consumedQuantity;
+            ContentValues cv = new ContentValues();
+            if (remainingQty <= 0.001) {
+                cv.put(DatabaseHelper.COL_FOOD_IS_CONSUMED, 1);
+                cv.put(DatabaseHelper.COL_FOOD_QUANTITY, 0.0);
+            } else {
+                cv.put(DatabaseHelper.COL_FOOD_QUANTITY, remainingQty);
+            }
+            cv.put(DatabaseHelper.COL_FOOD_UPDATED_AT, System.currentTimeMillis());
+
+            db.update(DatabaseHelper.TABLE_FOOD_ITEMS, cv,
+                    DatabaseHelper.COL_FOOD_ID + " = ?",
+                    new String[]{String.valueOf(id)});
+
+            // Log consumption record
+            ConsumptionRecord cr = new ConsumptionRecord(
+                    0,
+                    item.getId(),
+                    item.getName(),
+                    consumedQuantity,
+                    item.getUnit(),
+                    DateUtils.getTodayString(),
+                    item.getCategory(),
+                    item.getHouseholdId()
+            );
+            db.insert(DatabaseHelper.TABLE_CONSUMPTION_RECORDS, null, cr.toContentValues());
+
+            db.setTransactionSuccessful();
+            Log.d(TAG, "Item id " + id + " partially/fully consumed: " + consumedQuantity + " " + item.getUnit());
+            return true;
+        } finally {
+            db.endTransaction();
+        }
     }
 
     public boolean markWasted(long id, String reason, String notes) {
@@ -197,6 +340,7 @@ public class FoodRepository {
         try {
             ContentValues cv = new ContentValues();
             cv.put(DatabaseHelper.COL_FOOD_IS_WASTED, 1);
+            cv.put(DatabaseHelper.COL_FOOD_UPDATED_AT, System.currentTimeMillis());
             db.update(DatabaseHelper.TABLE_FOOD_ITEMS, cv,
                     DatabaseHelper.COL_FOOD_ID + " = ?",
                     new String[]{String.valueOf(id)});
@@ -209,6 +353,7 @@ public class FoodRepository {
             record.setReason(reason != null && !reason.isEmpty() ? reason : "Past Expiry Date");
             record.setEstimatedCost(item.getEstimatedCost());
             record.setNotes(notes != null ? notes : item.getNotes());
+            record.setHouseholdId(item.getHouseholdId());
 
             db.insert(DatabaseHelper.TABLE_WASTE_RECORDS, null, record.toContentValues());
 
@@ -236,9 +381,20 @@ public class FoodRepository {
         item.setNotes(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_FOOD_NOTES)));
 
         int fbIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_FIREBASE_ID);
-        if (fbIdx != -1) {
-            item.setFirebaseId(cursor.getString(fbIdx));
-        }
+        if (fbIdx != -1) item.setFirebaseId(cursor.getString(fbIdx));
+
+        int imgIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_IMAGE_URI);
+        if (imgIdx != -1) item.setImageUri(cursor.getString(imgIdx));
+
+        int houseIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_HOUSEHOLD_ID);
+        if (houseIdx != -1) item.setHouseholdId(cursor.getString(houseIdx));
+
+        int crtIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_CREATED_AT);
+        if (crtIdx != -1) item.setCreatedTimestamp(cursor.getLong(crtIdx));
+
+        int updIdx = cursor.getColumnIndex(DatabaseHelper.COL_FOOD_UPDATED_AT);
+        if (updIdx != -1) item.setUpdatedTimestamp(cursor.getLong(updIdx));
+
         return item;
     }
 }

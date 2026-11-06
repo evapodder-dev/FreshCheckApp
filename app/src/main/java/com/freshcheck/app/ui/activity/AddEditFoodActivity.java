@@ -16,6 +16,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.FoodRepository;
+import com.freshcheck.app.database.HouseholdRepository;
 import com.freshcheck.app.model.CategoryConstants;
 import com.freshcheck.app.model.FoodItem;
 import com.freshcheck.app.util.DateUtils;
@@ -36,11 +37,13 @@ public class AddEditFoodActivity extends AppCompatActivity {
     private MaterialButton btnSave;
 
     private FoodRepository repository;
+    private HouseholdRepository householdRepository;
     private long foodId = -1;
     private FoodItem editingItem;
 
     private String selectedPurchaseDate;
     private String selectedExpiryDate;
+    private String prefillImageUri = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +52,7 @@ public class AddEditFoodActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_edit_food);
 
         repository = new FoodRepository(this);
+        householdRepository = new HouseholdRepository(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar_add_edit);
         setSupportActionBar(toolbar);
@@ -77,6 +81,19 @@ public class AddEditFoodActivity extends AppCompatActivity {
                     }
                     btnSave.setText(R.string.btn_update);
                 }
+            }
+        } else {
+            // Check for prefill data from Food Scanner
+            if (getIntent().hasExtra("prefill_name")) {
+                String name = getIntent().getStringExtra("prefill_name");
+                etName.setText(name);
+            }
+            if (getIntent().hasExtra("prefill_category")) {
+                String cat = getIntent().getStringExtra("prefill_category");
+                setSpinnerSelection(spCategory, CategoryConstants.CATEGORIES, cat);
+            }
+            if (getIntent().hasExtra("prefill_image_uri")) {
+                prefillImageUri = getIntent().getStringExtra("prefill_image_uri");
             }
         }
 
@@ -181,6 +198,7 @@ public class AddEditFoodActivity extends AppCompatActivity {
     }
 
     private void setSpinnerSelection(Spinner spinner, String[] array, String value) {
+        if (value == null) return;
         int index = Arrays.asList(array).indexOf(value);
         if (index >= 0) {
             spinner.setSelection(index);
@@ -213,8 +231,15 @@ public class AddEditFoodActivity extends AppCompatActivity {
             FoodItem newItem = new FoodItem(0, name, qty, unit, category,
                     selectedPurchaseDate, selectedExpiryDate, location, cost,
                     false, false, notes, null);
+            if (prefillImageUri != null) {
+                newItem.setImageUri(prefillImageUri);
+            }
+            String activeHouseholdId = householdRepository.getActiveHouseholdId();
+            if (activeHouseholdId != null && !activeHouseholdId.isEmpty()) {
+                newItem.setHouseholdId(activeHouseholdId);
+            }
             repository.insert(newItem);
-            Toast.makeText(this, "Added " + name + " to inventory", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Added " + name + " to inventory (৳" + String.format(Locale.US, "%.1f", cost) + ")", Toast.LENGTH_SHORT).show();
         } else {
             editingItem.setName(name);
             editingItem.setQuantity(qty);
@@ -230,35 +255,5 @@ public class AddEditFoodActivity extends AppCompatActivity {
         }
 
         finish();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(TAG, "onStart() called");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume() called");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause() called");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop() called");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy() called");
     }
 }

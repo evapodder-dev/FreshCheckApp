@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="@string/recipes_subtitle"
+            android:text="Intelligent matching based on your pantry &amp; expiring ingredients"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
@@ -59,12 +59,64 @@
             android:layout_width="wrap_content"
             android:layout_height="42dp"
             android:layout_marginStart="6dp"
-            android:text="Online API"
+            android:text="TheMealDB"
             android:textColor="@color/text_on_primary"
             android:textSize="12sp"
             app:backgroundTint="@color/primary"
             app:cornerRadius="20dp" />
     </LinearLayout>
+
+    <!-- Meal Category Filter Chips -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:scrollbars="none"
+        android:paddingHorizontal="12dp">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_recipe_category"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_recipe_cat_all"
+                style="@style/Widget.FreshCheck.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="All Meals" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_recipe_cat_breakfast"
+                style="@style/Widget.FreshCheck.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Breakfast" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_recipe_cat_lunch"
+                style="@style/Widget.FreshCheck.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lunch" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_recipe_cat_dinner"
+                style="@style/Widget.FreshCheck.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dinner" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_recipe_cat_snacks"
+                style="@style/Widget.FreshCheck.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Snacks" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
 
     <!-- Source Banner / Progress Bar -->
     <ProgressBar
@@ -80,7 +132,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="14dp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
         android:text="Prioritizing recipes for items expiring soon"
         android:textColor="@color/primary"

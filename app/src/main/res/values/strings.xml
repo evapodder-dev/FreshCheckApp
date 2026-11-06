@@ -48,7 +48,7 @@
     <string name="label_location">Storage Location</string>
     <string name="label_purchase_date">Purchase Date</string>
     <string name="label_expiry_date">Expiry Date *</string>
-    <string name="label_estimated_cost">Estimated Cost ($)</string>
+    <string name="label_estimated_cost">Estimated Cost (৳)</string>
     <string name="label_notes">Notes (Optional)</string>
     <string name="btn_save">Save Item</string>
     <string name="btn_update">Update Item</string>

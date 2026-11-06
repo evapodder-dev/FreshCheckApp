@@ -25,10 +25,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.FoodRepository;
+import com.freshcheck.app.database.WasteRepository;
 import com.freshcheck.app.model.CategoryConstants;
 import com.freshcheck.app.model.FoodItem;
+import com.freshcheck.app.model.WasteRecord;
 import com.freshcheck.app.ui.activity.AddEditFoodActivity;
 import com.freshcheck.app.ui.adapter.FoodAdapter;
+import com.freshcheck.app.util.DateUtils;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -42,18 +45,30 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
 
     private EditText etSearch;
     private Spinner spCategory;
+    private Spinner spLocation;
     private ChipGroup chipGroupStatus;
     private RecyclerView rvInventory;
     private TextView tvCount;
     private View layoutEmpty;
     private FloatingActionButton fabAdd;
+    private View btnSort;
 
     private FoodAdapter adapter;
     private FoodRepository repository;
 
     private String currentSearch = "";
     private String currentCategory = "All";
+    private String currentLocation = "All";
     private String currentStatus = "All";
+    private int currentSortMode = FoodRepository.SORT_EXPIRY_ASC;
+
+    private final String[] sortOptions = {
+            "Expiry Date (Earliest First)",
+            "Expiry Date (Latest First)",
+            "Name (A to Z)",
+            "Name (Z to A)",
+            "Recently Added"
+    };
 
     @Nullable
     @Override
@@ -64,19 +79,31 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
 
         etSearch = view.findViewById(R.id.et_search_food);
         spCategory = view.findViewById(R.id.spinner_category_filter);
+        spLocation = view.findViewById(R.id.spinner_location_filter);
         chipGroupStatus = view.findViewById(R.id.chip_group_status);
         rvInventory = view.findViewById(R.id.rv_inventory);
         tvCount = view.findViewById(R.id.tv_inventory_count);
         layoutEmpty = view.findViewById(R.id.layout_empty_inventory);
         fabAdd = view.findViewById(R.id.fab_add_food);
+        btnSort = view.findViewById(R.id.btn_sort_inventory);
 
         rvInventory.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new FoodAdapter(requireContext(), this);
         rvInventory.setAdapter(adapter);
 
         setupCategorySpinner();
+        setupLocationSpinner();
         setupStatusChips();
         setupSearch();
+
+        if (btnSort != null) {
+            btnSort.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showSortDialog();
+                }
+            });
+        }
 
         fabAdd.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,7 +118,7 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
 
     private void setupCategorySpinner() {
         List<String> categories = new ArrayList<>();
-        categories.add("All");
+        categories.add("All Categories");
         categories.addAll(Arrays.asList(CategoryConstants.CATEGORIES));
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(),
@@ -101,7 +128,28 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
         spCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                currentCategory = parent.getItemAtPosition(position).toString();
+                currentCategory = position == 0 ? "All" : parent.getItemAtPosition(position).toString();
+                applyFilters();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
+
+    private void setupLocationSpinner() {
+        List<String> locations = new ArrayList<>();
+        locations.add("All Storage Locations");
+        locations.addAll(Arrays.asList(CategoryConstants.STORAGE_LOCATIONS));
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, locations);
+        spLocation.setAdapter(spinnerAdapter);
+
+        spLocation.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentLocation = position == 0 ? "All" : parent.getItemAtPosition(position).toString();
                 applyFilters();
             }
 
@@ -144,6 +192,34 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
         });
     }
 
+    private void showSortDialog() {
+        int selectedIndex = 0;
+        if (currentSortMode == FoodRepository.SORT_EXPIRY_DESC) selectedIndex = 1;
+        else if (currentSortMode == FoodRepository.SORT_NAME_ASC) selectedIndex = 2;
+        else if (currentSortMode == FoodRepository.SORT_NAME_DESC) selectedIndex = 3;
+        else if (currentSortMode == FoodRepository.SORT_RECENTLY_ADDED) selectedIndex = 4;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Sort Food Inventory")
+                .setSingleChoiceItems(sortOptions, selectedIndex, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case 1: currentSortMode = FoodRepository.SORT_EXPIRY_DESC; break;
+                            case 2: currentSortMode = FoodRepository.SORT_NAME_ASC; break;
+                            case 3: currentSortMode = FoodRepository.SORT_NAME_DESC; break;
+                            case 4: currentSortMode = FoodRepository.SORT_RECENTLY_ADDED; break;
+                            case 0:
+                            default: currentSortMode = FoodRepository.SORT_EXPIRY_ASC; break;
+                        }
+                        dialog.dismiss();
+                        applyFilters();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -151,8 +227,9 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
     }
 
     private void applyFilters() {
-        Log.d(TAG, "Filtering inventory: Query='" + currentSearch + "', Category=" + currentCategory + ", Status=" + currentStatus);
-        List<FoodItem> filtered = repository.searchAndFilter(currentSearch, currentCategory, currentStatus);
+        Log.d(TAG, "Filtering: Query='" + currentSearch + "', Category=" + currentCategory
+                + ", Location=" + currentLocation + ", Status=" + currentStatus + ", Sort=" + currentSortMode);
+        List<FoodItem> filtered = repository.searchAndFilter(currentSearch, currentCategory, currentStatus, currentLocation, currentSortMode);
         adapter.setItems(filtered);
 
         tvCount.setText(String.format(Locale.US, "Showing %d item%s", filtered.size(), filtered.size() == 1 ? "" : "s"));
@@ -168,9 +245,46 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
 
     @Override
     public void onEdit(FoodItem item) {
-        Intent intent = new Intent(getContext(), AddEditFoodActivity.class);
-        intent.putExtra(AddEditFoodActivity.EXTRA_FOOD_ID, item.getId());
-        startActivity(intent);
+        showFoodDetailsDialog(item);
+    }
+
+    private void showFoodDetailsDialog(final FoodItem item) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("• Category: ").append(item.getCategory()).append("\n");
+        sb.append("• Quantity: ").append(item.getQuantity()).append(" ").append(item.getUnit()).append("\n");
+        sb.append("• Storage Location: ").append(item.getLocation()).append("\n");
+        sb.append("• Purchase Date: ").append(item.getPurchaseDate()).append("\n");
+        sb.append("• Expiration Date: ").append(item.getExpiryDate());
+        if (item.getDaysRemaining() >= 0) {
+            sb.append(" (").append(item.getDaysRemaining()).append(" days remaining)\n");
+        } else {
+            sb.append(" (Expired ").append(Math.abs(item.getDaysRemaining())).append(" days ago)\n");
+        }
+        sb.append("• Estimated Cost: ৳").append(String.format(Locale.US, "%.2f", item.getEstimatedCost())).append("\n");
+        if (item.getNotes() != null && !item.getNotes().isEmpty()) {
+            sb.append("• Notes: ").append(item.getNotes()).append("\n");
+        }
+        sb.append("• Status: ").append(item.getStatus());
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(item.getName())
+                .setMessage(sb.toString())
+                .setPositiveButton("Edit Item", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(getContext(), AddEditFoodActivity.class);
+                        intent.putExtra(AddEditFoodActivity.EXTRA_FOOD_ID, item.getId());
+                        startActivity(intent);
+                    }
+                })
+                .setNeutralButton("Consume", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        onMarkConsumed(item);
+                    }
+                })
+                .setNegativeButton("Close", null)
+                .show();
     }
 
     @Override
@@ -191,10 +305,44 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
     }
 
     @Override
-    public void onMarkConsumed(FoodItem item) {
-        repository.markConsumed(item.getId());
-        Toast.makeText(getContext(), item.getName() + " marked as consumed! 🎉", Toast.LENGTH_SHORT).show();
-        applyFilters();
+    public void onMarkConsumed(final FoodItem item) {
+        final EditText etQty = new EditText(requireContext());
+        etQty.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etQty.setText(String.format(Locale.US, "%.1f", item.getQuantity()));
+        etQty.setHint("Quantity consumed");
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Mark as Consumed")
+                .setMessage("Enter the quantity of '" + item.getName() + "' you consumed (" + item.getUnit() + "):")
+                .setView(etQty)
+                .setPositiveButton("Consume", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        double consumedQty = item.getQuantity();
+                        try {
+                            consumedQty = Double.parseDouble(etQty.getText().toString().trim());
+                        } catch (Exception ignored) {}
+
+                        if (consumedQty <= 0) {
+                            Toast.makeText(getContext(), "Invalid quantity", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        repository.consumePartial(item.getId(), consumedQty);
+                        Toast.makeText(getContext(), "Consumed " + consumedQty + " " + item.getUnit() + " of " + item.getName(), Toast.LENGTH_SHORT).show();
+                        applyFilters();
+                    }
+                })
+                .setNeutralButton("Consume All", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        repository.markConsumed(item.getId());
+                        Toast.makeText(getContext(), item.getName() + " finished! 🎉", Toast.LENGTH_SHORT).show();
+                        applyFilters();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     @Override
