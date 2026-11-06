@@ -6,12 +6,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ImageDecoder;
 import android.graphics.Paint;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -29,31 +26,49 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import com.freshcheck.app.R;
+import com.freshcheck.app.util.CameraImageHelper;
+import com.freshcheck.app.util.FoodClassifierHelper;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.label.ImageLabel;
 import com.google.mlkit.vision.label.ImageLabeler;
 import com.google.mlkit.vision.label.ImageLabeling;
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class FoodScannerActivity extends AppCompatActivity {
     private static final String TAG = "FoodScannerActivity";
 
+    private static final String[] CATEGORIES = {
+            "Vegetables", "Fruits", "Dairy", "Meat", "Fish", "Bakery", "Grains", "Beverages", "Snacks", "Others"
+    };
+
     private ImageView ivPreview;
     private LinearLayout layoutPlaceholder;
     private ProgressBar pbScanning;
     private MaterialCardView cardResults;
-    private TextView tvName;
-    private TextView tvCategory;
     private TextView tvConfidence;
+    private TextInputEditText etDetectedName;
+    private TextView tvAlternativesLabel;
+    private ChipGroup chipGroupCandidates;
+    private ChipGroup chipGroupCategory;
 
-    private String detectedName = "";
+    private String detectedName = "Fresh Food Item";
     private String detectedCategory = "Vegetables";
     private Uri selectedImageUri = null;
+    private Uri tempCameraUri = null;
 
     // Camera Permission Launcher
     private final ActivityResultLauncher<String> cameraPermissionLauncher =
@@ -70,19 +85,26 @@ public class FoodScannerActivity extends AppCompatActivity {
                 }
             });
 
-    // Camera Capture Launcher
-    private final ActivityResultLauncher<Void> cameraLauncher =
-            registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), new ActivityResultCallback<Bitmap>() {
+    // High-Resolution Camera Capture Launcher via FileProvider
+    private final ActivityResultLauncher<Uri> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicture(), new ActivityResultCallback<Boolean>() {
                 @Override
-                public void onActivityResult(Bitmap bitmap) {
-                    if (bitmap != null) {
-                        Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
-                        ivPreview.setImageBitmap(safeBitmap);
-                        layoutPlaceholder.setVisibility(View.GONE);
-                        runImageRecognition(safeBitmap);
+                public void onActivityResult(Boolean success) {
+                    if (Boolean.TRUE.equals(success) && tempCameraUri != null) {
+                        selectedImageUri = tempCameraUri;
+                        Bitmap bitmap = CameraImageHelper.loadOptimizedBitmap(FoodScannerActivity.this, tempCameraUri, 1280);
+                        if (bitmap != null) {
+                            ivPreview.setImageBitmap(bitmap);
+                            layoutPlaceholder.setVisibility(View.GONE);
+                            runDualMlKitRecognition(bitmap);
+                        } else {
+                            Toast.makeText(FoodScannerActivity.this,
+                                    "Unable to load captured photo. Please try again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(FoodScannerActivity.this,
-                                "No photo captured. Please try again, choose from Gallery, or tap a sample item below.",
+                                "Photo capture cancelled or not saved.",
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -95,26 +117,15 @@ public class FoodScannerActivity extends AppCompatActivity {
                 public void onActivityResult(Uri uri) {
                     if (uri != null) {
                         selectedImageUri = uri;
-                        try {
-                            Bitmap bitmap;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
-                                bitmap = ImageDecoder.decodeBitmap(source, new ImageDecoder.OnHeaderDecodedListener() {
-                                    @Override
-                                    public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info, ImageDecoder.Source source) {
-                                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                                    }
-                                });
-                            } else {
-                                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                            }
-                            Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
-                            ivPreview.setImageBitmap(safeBitmap);
+                        Bitmap bitmap = CameraImageHelper.loadOptimizedBitmap(FoodScannerActivity.this, uri, 1280);
+                        if (bitmap != null) {
+                            ivPreview.setImageBitmap(bitmap);
                             layoutPlaceholder.setVisibility(View.GONE);
-                            runImageRecognition(safeBitmap);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error loading gallery image: " + e.getMessage());
-                            Toast.makeText(FoodScannerActivity.this, "Failed to load image from gallery.", Toast.LENGTH_SHORT).show();
+                            runDualMlKitRecognition(bitmap);
+                        } else {
+                            Toast.makeText(FoodScannerActivity.this,
+                                    "Failed to load image from gallery.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -141,9 +152,11 @@ public class FoodScannerActivity extends AppCompatActivity {
         layoutPlaceholder = findViewById(R.id.layout_placeholder);
         pbScanning = findViewById(R.id.pb_scanning);
         cardResults = findViewById(R.id.card_detected_results);
-        tvName = findViewById(R.id.tv_detected_name);
-        tvCategory = findViewById(R.id.tv_detected_category);
         tvConfidence = findViewById(R.id.tv_detected_confidence);
+        etDetectedName = findViewById(R.id.et_detected_name);
+        tvAlternativesLabel = findViewById(R.id.tv_alternatives_label);
+        chipGroupCandidates = findViewById(R.id.chip_group_candidates);
+        chipGroupCategory = findViewById(R.id.chip_group_category);
 
         findViewById(R.id.btn_take_photo).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,8 +182,13 @@ public class FoodScannerActivity extends AppCompatActivity {
         findViewById(R.id.btn_add_to_inventory).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String finalName = etDetectedName.getText() != null ? etDetectedName.getText().toString().trim() : "";
+                if (finalName.isEmpty()) {
+                    finalName = detectedName;
+                }
+
                 Intent intent = new Intent(FoodScannerActivity.this, AddEditFoodActivity.class);
-                intent.putExtra("prefill_name", detectedName);
+                intent.putExtra("prefill_name", finalName);
                 intent.putExtra("prefill_category", detectedCategory);
                 if (selectedImageUri != null) {
                     intent.putExtra("prefill_image_uri", selectedImageUri.toString());
@@ -179,6 +197,9 @@ public class FoodScannerActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+        // Initialize category chips
+        setupCategoryChips(detectedCategory);
     }
 
     private void checkAndLaunchCamera() {
@@ -191,7 +212,12 @@ public class FoodScannerActivity extends AppCompatActivity {
 
     private void launchCamera() {
         try {
-            cameraLauncher.launch(null);
+            tempCameraUri = CameraImageHelper.createTempImageUri(this);
+            if (tempCameraUri != null) {
+                cameraLauncher.launch(tempCameraUri);
+            } else {
+                Toast.makeText(this, "Could not initialize camera storage.", Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception e) {
             Log.e(TAG, "Camera launch error: " + e.getMessage());
             Toast.makeText(this, "Camera not available: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -208,14 +234,13 @@ public class FoodScannerActivity extends AppCompatActivity {
                 ivPreview.setImageBitmap(sampleBitmap);
                 layoutPlaceholder.setVisibility(View.GONE);
 
-                detectedName = foodName;
-                detectedCategory = category;
-
-                tvName.setText("Detected Food: " + detectedName);
-                tvCategory.setText("Suggested Category: " + detectedCategory);
-                tvConfidence.setText("Recognition Confidence: 96% (Verified Sample)");
-                cardResults.setVisibility(View.VISIBLE);
-
+                FoodClassifierHelper.ClassificationResult sampleResult = new FoodClassifierHelper.ClassificationResult(
+                        foodName,
+                        category,
+                        98,
+                        Arrays.asList(foodName, category, "Organic Produce")
+                );
+                displayClassificationResult(sampleResult);
                 Toast.makeText(FoodScannerActivity.this, "Recognized " + foodName + "!", Toast.LENGTH_SHORT).show();
             }
         });
@@ -237,120 +262,147 @@ public class FoodScannerActivity extends AppCompatActivity {
         return bitmap;
     }
 
-    private Bitmap ensureSoftwareBitmap(Bitmap bitmap) {
-        if (bitmap == null) return null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.getConfig() == Bitmap.Config.HARDWARE) {
-            return bitmap.copy(Bitmap.Config.ARGB_8888, false);
-        }
-        return bitmap;
-    }
-
-    private void runImageRecognition(final Bitmap bitmap) {
+    /**
+     * Executes both ML Kit Image Labeling and ML Kit Text Recognition in parallel
+     * to accurately identify unpacked produce as well as packaged branded groceries.
+     */
+    private void runDualMlKitRecognition(final Bitmap bitmap) {
         if (bitmap == null) return;
         pbScanning.setVisibility(View.VISIBLE);
         cardResults.setVisibility(View.GONE);
 
         try {
-            InputImage image = InputImage.fromBitmap(bitmap, 0);
-            ImageLabeler labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
+            final InputImage image = InputImage.fromBitmap(bitmap, 0);
+            final ImageLabeler labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
+            final TextRecognizer textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
             labeler.process(image)
                     .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
                         @Override
-                        public void onSuccess(List<ImageLabel> labels) {
-                            pbScanning.setVisibility(View.GONE);
-                            if (labels != null && !labels.isEmpty()) {
-                                processDetectedLabels(labels);
-                            } else {
-                                fallbackClassification();
-                            }
+                        public void onSuccess(final List<ImageLabel> labels) {
+                            textRecognizer.process(image)
+                                    .addOnSuccessListener(new OnSuccessListener<Text>() {
+                                        @Override
+                                        public void onSuccess(Text ocrText) {
+                                            pbScanning.setVisibility(View.GONE);
+                                            FoodClassifierHelper.ClassificationResult result =
+                                                    FoodClassifierHelper.classify(labels, ocrText);
+                                            displayClassificationResult(result);
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            pbScanning.setVisibility(View.GONE);
+                                            FoodClassifierHelper.ClassificationResult result =
+                                                    FoodClassifierHelper.classify(labels, null);
+                                            displayClassificationResult(result);
+                                        }
+                                    });
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            pbScanning.setVisibility(View.GONE);
-                            Log.w(TAG, "ML Kit notice: " + e.getMessage());
-                            fallbackClassification();
+                            // Try OCR even if labeling fails
+                            textRecognizer.process(image)
+                                    .addOnSuccessListener(new OnSuccessListener<Text>() {
+                                        @Override
+                                        public void onSuccess(Text ocrText) {
+                                            pbScanning.setVisibility(View.GONE);
+                                            FoodClassifierHelper.ClassificationResult result =
+                                                    FoodClassifierHelper.classify(null, ocrText);
+                                            displayClassificationResult(result);
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception ex) {
+                                            pbScanning.setVisibility(View.GONE);
+                                            FoodClassifierHelper.ClassificationResult fallback =
+                                                    FoodClassifierHelper.classify(null, null);
+                                            displayClassificationResult(fallback);
+                                        }
+                                    });
                         }
                     });
         } catch (Exception e) {
             pbScanning.setVisibility(View.GONE);
-            Log.e(TAG, "Recognition error: " + e.getMessage());
-            fallbackClassification();
+            Log.e(TAG, "Recognition initiation error: " + e.getMessage());
+            FoodClassifierHelper.ClassificationResult fallback = FoodClassifierHelper.classify(null, null);
+            displayClassificationResult(fallback);
         }
     }
 
-    private void processDetectedLabels(List<ImageLabel> labels) {
-        ImageLabel bestFoodLabel = null;
-        for (ImageLabel label : labels) {
-            String text = label.getText().toLowerCase();
-            if (isFoodKeyword(text)) {
-                bestFoodLabel = label;
-                break;
-            }
-        }
+    private void displayClassificationResult(FoodClassifierHelper.ClassificationResult result) {
+        if (result == null) return;
 
-        if (bestFoodLabel == null && !labels.isEmpty()) {
-            bestFoodLabel = labels.get(0);
-        }
+        detectedName = result.foodName;
+        detectedCategory = result.category;
 
-        if (bestFoodLabel != null) {
-            detectedName = capitalize(bestFoodLabel.getText());
-            detectedCategory = inferCategory(detectedName);
-            int confidence = (int) (bestFoodLabel.getConfidence() * 100);
+        etDetectedName.setText(detectedName);
+        tvConfidence.setText(result.confidence + "% Confidence");
 
-            tvName.setText("Detected Food: " + detectedName);
-            tvCategory.setText("Suggested Category: " + detectedCategory);
-            tvConfidence.setText("Recognition Confidence: " + confidence + "%");
-            cardResults.setVisibility(View.VISIBLE);
-        } else {
-            fallbackClassification();
-        }
-    }
+        setupCategoryChips(detectedCategory);
+        setupCandidateChips(result.candidateAlternatives);
 
-    private void fallbackClassification() {
-        detectedName = "Fresh Food Item";
-        detectedCategory = "Vegetables";
-        tvName.setText("Detected Item: " + detectedName);
-        tvCategory.setText("Suggested Category: " + detectedCategory);
-        tvConfidence.setText("Ready for confirmation (tap button below to edit)");
         cardResults.setVisibility(View.VISIBLE);
     }
 
-    private boolean isFoodKeyword(String text) {
-        String[] keywords = {"apple", "banana", "orange", "fruit", "vegetable", "tomato", "potato",
-                "milk", "dairy", "cheese", "bread", "bakery", "meat", "chicken", "fish", "egg", "rice",
-                "carrot", "salad", "food", "beverage", "snack", "produce", "dish", "ingredient"};
-        for (String k : keywords) {
-            if (text.contains(k)) return true;
-        }
-        return false;
-    }
+    private void setupCategoryChips(String currentCategory) {
+        if (chipGroupCategory == null) return;
+        chipGroupCategory.removeAllViews();
 
-    private String inferCategory(String food) {
-        String lower = food.toLowerCase();
-        if (lower.contains("apple") || lower.contains("banana") || lower.contains("orange") || lower.contains("fruit") || lower.contains("berry")) {
-            return "Fruits";
-        } else if (lower.contains("milk") || lower.contains("cheese") || lower.contains("yogurt") || lower.contains("dairy") || lower.contains("egg")) {
-            return "Dairy";
-        } else if (lower.contains("chicken") || lower.contains("meat") || lower.contains("beef") || lower.contains("pork")) {
-            return "Meat";
-        } else if (lower.contains("fish") || lower.contains("seafood") || lower.contains("shrimp")) {
-            return "Fish";
-        } else if (lower.contains("bread") || lower.contains("toast") || lower.contains("bakery") || lower.contains("cake")) {
-            return "Bakery";
-        } else if (lower.contains("rice") || lower.contains("grain") || lower.contains("oat") || lower.contains("flour")) {
-            return "Grains";
-        } else if (lower.contains("juice") || lower.contains("tea") || lower.contains("coffee") || lower.contains("drink") || lower.contains("water")) {
-            return "Beverages";
-        } else {
-            return "Vegetables";
+        for (final String cat : CATEGORIES) {
+            Chip chip = new Chip(this);
+            chip.setText(cat);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            if (cat.equalsIgnoreCase(currentCategory)) {
+                chip.setChecked(true);
+            }
+
+            chip.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    detectedCategory = cat;
+                }
+            });
+
+            chipGroupCategory.addView(chip);
         }
     }
 
-    private String capitalize(String str) {
-        if (str == null || str.isEmpty()) return "";
-        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    private void setupCandidateChips(List<String> candidates) {
+        if (chipGroupCandidates == null) return;
+        chipGroupCandidates.removeAllViews();
+
+        if (candidates == null || candidates.isEmpty()) {
+            if (tvAlternativesLabel != null) tvAlternativesLabel.setVisibility(View.GONE);
+            chipGroupCandidates.setVisibility(View.GONE);
+            return;
+        }
+
+        if (tvAlternativesLabel != null) tvAlternativesLabel.setVisibility(View.VISIBLE);
+        chipGroupCandidates.setVisibility(View.VISIBLE);
+
+        for (final String altName : candidates) {
+            Chip chip = new Chip(this);
+            chip.setText(altName);
+            chip.setCheckable(false);
+            chip.setClickable(true);
+            chip.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    detectedName = altName;
+                    etDetectedName.setText(altName);
+                    detectedCategory = FoodClassifierHelper.inferCategory(altName);
+                    setupCategoryChips(detectedCategory);
+                    Toast.makeText(FoodScannerActivity.this, "Selected " + altName, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            chipGroupCandidates.addView(chip);
+        }
     }
 }

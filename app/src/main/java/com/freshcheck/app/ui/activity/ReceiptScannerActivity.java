@@ -3,11 +3,8 @@ package com.freshcheck.app.ui.activity;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.ImageDecoder;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -25,6 +22,8 @@ import androidx.core.content.ContextCompat;
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.ShoppingRepository;
 import com.freshcheck.app.model.ShoppingItem;
+import com.freshcheck.app.util.CameraImageHelper;
+import com.freshcheck.app.util.FoodClassifierHelper;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.card.MaterialCardView;
@@ -36,7 +35,6 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ReceiptScannerActivity extends AppCompatActivity {
@@ -47,6 +45,7 @@ public class ReceiptScannerActivity extends AppCompatActivity {
     private TextView tvExtractedSummary;
     private final List<ShoppingItem> parsedItems = new ArrayList<>();
     private ShoppingRepository shoppingRepository;
+    private Uri tempReceiptUri = null;
 
     // Camera Permission Launcher
     private final ActivityResultLauncher<String> cameraPermissionLauncher =
@@ -63,17 +62,23 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                 }
             });
 
-    // Camera Launcher
-    private final ActivityResultLauncher<Void> cameraLauncher =
-            registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), new ActivityResultCallback<Bitmap>() {
+    // High-Resolution Camera Launcher via FileProvider
+    private final ActivityResultLauncher<Uri> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicture(), new ActivityResultCallback<Boolean>() {
                 @Override
-                public void onActivityResult(Bitmap bitmap) {
-                    if (bitmap != null) {
-                        Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
-                        processReceiptImage(safeBitmap);
+                public void onActivityResult(Boolean success) {
+                    if (Boolean.TRUE.equals(success) && tempReceiptUri != null) {
+                        Bitmap safeBitmap = CameraImageHelper.loadOptimizedBitmap(ReceiptScannerActivity.this, tempReceiptUri, 1920);
+                        if (safeBitmap != null) {
+                            processReceiptImage(safeBitmap);
+                        } else {
+                            Toast.makeText(ReceiptScannerActivity.this,
+                                    "Unable to load receipt photo.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(ReceiptScannerActivity.this,
-                                "No photo captured. Please try again or pick an image.",
+                                "Receipt capture cancelled.",
                                 Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -85,24 +90,13 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                 @Override
                 public void onActivityResult(Uri uri) {
                     if (uri != null) {
-                        try {
-                            Bitmap bitmap;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
-                                bitmap = ImageDecoder.decodeBitmap(source, new ImageDecoder.OnHeaderDecodedListener() {
-                                    @Override
-                                    public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info, ImageDecoder.Source source) {
-                                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                                    }
-                                });
-                            } else {
-                                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                            }
-                            Bitmap safeBitmap = ensureSoftwareBitmap(bitmap);
+                        Bitmap safeBitmap = CameraImageHelper.loadOptimizedBitmap(ReceiptScannerActivity.this, uri, 1920);
+                        if (safeBitmap != null) {
                             processReceiptImage(safeBitmap);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error loading receipt image: " + e.getMessage());
-                            Toast.makeText(ReceiptScannerActivity.this, "Failed to read image from gallery.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(ReceiptScannerActivity.this,
+                                    "Failed to read image from gallery.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -145,7 +139,6 @@ public class ReceiptScannerActivity extends AppCompatActivity {
             }
         });
 
-        // Sample receipt button
         findViewById(R.id.btn_sample_receipt).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -181,19 +174,16 @@ public class ReceiptScannerActivity extends AppCompatActivity {
 
     private void launchCamera() {
         try {
-            cameraLauncher.launch(null);
+            tempReceiptUri = CameraImageHelper.createTempImageUri(this);
+            if (tempReceiptUri != null) {
+                cameraLauncher.launch(tempReceiptUri);
+            } else {
+                Toast.makeText(this, "Could not initialize camera storage.", Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception e) {
-            Log.e(TAG, "Camera error: " + e.getMessage());
+            Log.e(TAG, "Receipt camera launch error: " + e.getMessage());
             Toast.makeText(this, "Camera not available: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private Bitmap ensureSoftwareBitmap(Bitmap bitmap) {
-        if (bitmap == null) return null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.getConfig() == Bitmap.Config.HARDWARE) {
-            return bitmap.copy(Bitmap.Config.ARGB_8888, false);
-        }
-        return bitmap;
     }
 
     private void loadSampleReceipt() {
@@ -209,7 +199,7 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                 "TOTAL AMOUNT: ৳455.00\n" +
                 "THANK YOU FOR SHOPPING!";
 
-        Toast.makeText(this, "Simulating receipt scan...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Loading verified sample receipt...", Toast.LENGTH_SHORT).show();
         parseReceiptText(sampleReceiptText);
     }
 
@@ -239,7 +229,7 @@ public class ReceiptScannerActivity extends AppCompatActivity {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             pbOcr.setVisibility(View.GONE);
-                            Log.w(TAG, "OCR failed: " + e.getMessage());
+                            Log.w(TAG, "OCR recognition warning: " + e.getMessage());
                             fallbackSampleReceipt();
                         }
                     });
@@ -255,9 +245,6 @@ public class ReceiptScannerActivity extends AppCompatActivity {
         String[] lines = fullText.split("\n");
         StringBuilder sb = new StringBuilder();
 
-        // Pattern to match lines like: "1. Fresh Milk 1L - ৳90.00" or "Milk 90.00"
-        Pattern pricePattern = Pattern.compile("([\\d]+[\\.,]?[\\d]*)$");
-
         for (String rawLine : lines) {
             String line = rawLine.trim();
             if (line.length() < 3) continue;
@@ -266,19 +253,24 @@ public class ReceiptScannerActivity extends AppCompatActivity {
             if (lower.contains("total") || lower.contains("subtotal") || lower.contains("tax") ||
                     lower.contains("cash") || lower.contains("change") || lower.contains("date") ||
                     lower.contains("thank") || lower.contains("tel") || lower.contains("card") ||
-                    lower.contains("superstore") || lower.contains("invoice")) {
+                    lower.contains("superstore") || lower.contains("invoice") || lower.contains("receipt") ||
+                    lower.contains("discount") || lower.contains("balance")) {
                 continue;
             }
 
-            // Clean item name
-            String cleaned = line.replaceAll("^[\\d]+[\\.\\)]\\s*", ""); // remove leading "1. " or "1) "
-            cleaned = cleaned.replaceAll("[-–:]\\s*[৳$]?[\\d\\.,]+$", "").trim(); // remove trailing price
+            // Clean item name: remove leading index numbers (1. / 1))
+            String cleaned = line.replaceAll("^[\\d]+[\\.\\)]\\s*", "");
+            // Clean trailing prices (৳95.00, 95.00, $5.00)
+            cleaned = cleaned.replaceAll("[-–:]?\\s*[৳$]?[\\d]+[\\.,][\\d]{1,2}\\s*$", "").trim();
+            cleaned = cleaned.replaceAll("[-–:]?\\s*[৳$]?[\\d]+\\s*$", "").trim();
 
-            if (cleaned.length() >= 3) {
-                ShoppingItem item = new ShoppingItem(cleaned, 1.0, inferUnit(cleaned), inferCategory(cleaned));
+            if (cleaned.length() >= 3 && !cleaned.matches("^[\\W_]+$")) {
+                String cat = FoodClassifierHelper.inferCategory(cleaned);
+                String unit = inferUnit(cleaned);
+                ShoppingItem item = new ShoppingItem(cleaned, 1.0, unit, cat);
                 parsedItems.add(item);
                 sb.append("• ").append(cleaned)
-                        .append(" (").append(item.getCategory()).append(")\n");
+                        .append(" (").append(cat).append(")\n");
             }
         }
 
@@ -317,27 +309,6 @@ public class ReceiptScannerActivity extends AppCompatActivity {
             return "gram";
         } else {
             return "pieces";
-        }
-    }
-
-    private String inferCategory(String name) {
-        String lower = name.toLowerCase();
-        if (lower.contains("milk") || lower.contains("cheese") || lower.contains("egg") || lower.contains("butter") || lower.contains("yogurt")) {
-            return "Dairy";
-        } else if (lower.contains("bread") || lower.contains("cake") || lower.contains("cookie") || lower.contains("toast") || lower.contains("biscuit")) {
-            return "Bakery";
-        } else if (lower.contains("apple") || lower.contains("banana") || lower.contains("orange") || lower.contains("fruit") || lower.contains("mango")) {
-            return "Fruits";
-        } else if (lower.contains("meat") || lower.contains("chicken") || lower.contains("beef") || lower.contains("pork")) {
-            return "Meat";
-        } else if (lower.contains("fish") || lower.contains("salmon") || lower.contains("prawn") || lower.contains("shrimp")) {
-            return "Fish";
-        } else if (lower.contains("rice") || lower.contains("oat") || lower.contains("flour") || lower.contains("cereal")) {
-            return "Grains";
-        } else if (lower.contains("juice") || lower.contains("tea") || lower.contains("coffee") || lower.contains("cola") || lower.contains("beverage")) {
-            return "Beverages";
-        } else {
-            return "Vegetables";
         }
     }
 }
