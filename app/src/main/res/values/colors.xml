@@ -1,55 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Primary Greens -->
-    <color name="primary">#2E7D32</color>
-    <color name="primary_dark">#1B5E20</color>
-    <color name="primary_light">#E8F5E9</color>
-    <color name="accent">#4CAF50</color>
-    <color name="accent_light">#C8E6C9</color>
+    <!-- FreshCheck Design System — Nature-Inspired Palette -->
+    <!-- Primary Brand Colors -->
+    <color name="primary">#174D3A</color>              <!-- Deep Forest Green -->
+    <color name="primary_variant">#24654D</color>      <!-- Mid Forest Green -->
+    <color name="primary_dark">#0F3829</color>         <!-- Dark Forest Green -->
+    <color name="primary_light">#EAF4EF</color>        <!-- Soft Forest Tint -->
+    <color name="accent">#3D8B65</color>               <!-- Fresh Green -->
+    <color name="accent_light">#B9E4CE</color>         <!-- Mint Green -->
+    <color name="mint_soft">#E4F5EC</color>            <!-- Subtle Mint Tint -->
 
-    <!-- Neutrals and Backgrounds -->
-    <color name="background">#F7FAF7</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="surface_variant">#F1F5F1</color>
-    <color name="card_background">#FFFFFF</color>
-    <color name="card_border">#E2E8E2</color>
-    <color name="divider">#E0E5E0</color>
+    <!-- Light Background & Surfaces -->
+    <color name="background">#F7F8F5</color>           <!-- Warm Light Background -->
+    <color name="surface">#FFFFFF</color>              <!-- Pure Surface -->
+    <color name="surface_variant">#EEF2EC</color>      <!-- Secondary Surface -->
+    <color name="card_background">#FFFFFF</color>      <!-- Card Surface -->
+    <color name="card_border">#E4E8E2</color>          <!-- Subtle Card Border -->
+    <color name="divider">#E8ECE6</color>              <!-- Hairline Divider -->
 
-    <!-- Typography -->
-    <color name="text_primary">#1C261C</color>
-    <color name="text_secondary">#596659</color>
-    <color name="text_hint">#98A398</color>
-    <color name="text_on_primary">#FFFFFF</color>
+    <!-- Typography Tokens -->
+    <color name="text_primary">#17251D</color>         <!-- Deep Evergreen Dark -->
+    <color name="text_secondary">#78847B</color>       <!-- Muted Sage Grey -->
+    <color name="text_hint">#9EA8A0</color>            <!-- Input Hint Grey -->
+    <color name="text_on_primary">#FFFFFF</color>      <!-- High Contrast White -->
+    <color name="text_on_accent">#FFFFFF</color>
 
-    <!-- Expiry Status Colors -->
-    <color name="status_fresh">#2E7D32</color>
-    <color name="status_fresh_bg">#E8F5E9</color>
-    <color name="status_fresh_border">#A5D6A7</color>
+    <!-- Expiry Status Tokens (Apple Health / Modern FinTech style) -->
+    <!-- Fresh Status: #3D946B -->
+    <color name="status_fresh">#3D946B</color>
+    <color name="status_fresh_bg">#EAF6F0</color>
+    <color name="status_fresh_border">#B9E4CE</color>
 
-    <color name="status_expiring">#EF6C00</color>
-    <color name="status_expiring_bg">#FFF3E0</color>
-    <color name="status_expiring_border">#FFCC80</color>
+    <!-- Expiring Soon Status: #E6A23C -->
+    <color name="status_expiring">#E6A23C</color>
+    <color name="status_expiring_bg">#FDF6EC</color>
+    <color name="status_expiring_border">#F8D8A7</color>
 
-    <color name="status_today">#D84315</color>
-    <color name="status_today_bg">#FBE9E7</color>
-    <color name="status_today_border">#FFAB91</color>
+    <!-- Expires Today Status: #E47742 -->
+    <color name="status_today">#E47742</color>
+    <color name="status_today_bg">#FDF1EB</color>
+    <color name="status_today_border">#F7BA9E</color>
 
-    <color name="status_expired">#C62828</color>
-    <color name="status_expired_bg">#FFEBEE</color>
-    <color name="status_expired_border">#EF9A9A</color>
+    <!-- Expired Status: #D9534F -->
+    <color name="status_expired">#D9534F</color>
+    <color name="status_expired_bg">#FCEEEE</color>
+    <color name="status_expired_border">#F0A8A6</color>
 
-    <!-- Dashboard & Charts -->
-    <color name="chart_fresh">#43A047</color>
-    <color name="chart_expiring">#FB8C00</color>
-    <color name="chart_today">#F4511E</color>
-    <color name="chart_expired">#E53935</color>
-    <color name="chart_consumed">#1E88E5</color>
-    <color name="chart_wasted">#8E24AA</color>
+    <!-- Chart & Visual Data Tokens -->
+    <color name="chart_fresh">#3D946B</color>
+    <color name="chart_expiring">#E6A23C</color>
+    <color name="chart_today">#E47742</color>
+    <color name="chart_expired">#D9534F</color>
+    <color name="chart_consumed">#2F80ED</color>
+    <color name="chart_track">#EBF0E9</color>
 
-    <!-- Waste Reasons -->
-    <color name="waste_spoiled">#E53935</color>
-    <color name="waste_expired">#FB8C00</color>
-    <color name="waste_overcooked">#8E24AA</color>
-    <color name="waste_leftover">#039BE5</color>
-    <color name="waste_other">#757575</color>
+    <!-- Waste Breakdown Categories -->
+    <color name="waste_spoiled">#D9534F</color>
+    <color name="waste_expired">#E6A23C</color>
+    <color name="waste_overcooked">#9B51E0</color>
+    <color name="waste_leftover">#2D9CDB</color>
+    <color name="waste_other">#78847B</color>
+
+    <!-- Navigation & Component Elevation Shadows -->
+    <color name="nav_selected">#174D3A</color>
+    <color name="nav_unselected">#78847B</color>
+    <color name="nav_pill">#E4F5EC</color>
 </resources>

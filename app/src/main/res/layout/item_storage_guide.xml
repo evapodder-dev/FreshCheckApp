@@ -5,15 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="1dp"
-    app:cardBackgroundColor="@color/surface">
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/card_border"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="@color/card_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,6 +28,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="8dp"
                 android:text="Leafy Greens (Spinach, Lettuce)"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
@@ -36,8 +39,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_badge_fresh"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
                 android:text="Vegetables"
                 android:textColor="@color/primary"
                 android:textSize="11sp"
@@ -48,7 +51,7 @@
             android:id="@+id/tv_storage_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:text="📍 Best Location: Refrigerator (Crisper) • Shelf Life: 5–7 days"
             android:textColor="@color/primary"
             android:textSize="12sp"
@@ -58,7 +61,8 @@
             android:id="@+id/tv_storage_tips"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="3dp"
             android:text="Wrap in paper towel inside a loose bag to absorb excess moisture."
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
@@ -67,7 +71,8 @@
             android:id="@+id/tv_freezing_tips"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="3dp"
             android:text="❄️ Freezing: Blanch for 2 mins, shock in ice water, freeze up to 6 months."
             android:textColor="@color/text_hint"
             android:textSize="12sp" />

@@ -4,67 +4,77 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
+    android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="5dp"
-    app:cardCornerRadius="10dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="1dp"
-    app:strokeColor="@color/status_expiring_border"
+    app:strokeColor="@color/card_border"
     app:strokeWidth="1dp"
-    app:cardBackgroundColor="@color/surface">
+    app:cardBackgroundColor="@color/card_background">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:orientation="vertical"
+        android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tv_use_first_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Fresh Milk 2%"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tv_use_first_badge" />
-
-        <TextView
-            android:id="@+id/tv_use_first_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_today"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
-            android:text="Expires Today"
-            android:textColor="@color/status_today"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_use_first_info"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="1.0 liters • Refrigerator"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_use_first_name"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Quick Action Buttons: Consumed vs Wasted -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_use_first_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fresh Milk 2%"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_use_first_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="1.0 liters • Refrigerator • Expires in 1 day"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_use_first_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_badge_today"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="Expires Today"
+                android:textColor="@color/status_today"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/divider" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="end"
-            app:layout_constraintTop_toBottomOf="@id/tv_use_first_info"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_quick_waste"
@@ -74,10 +84,11 @@
                 android:layout_marginEnd="8dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:paddingHorizontal="12dp"
-                android:text="Waste"
+                android:paddingHorizontal="14dp"
+                android:text="Log Waste"
                 android:textColor="@color/status_expired"
                 android:textSize="12sp"
+                app:cornerRadius="10dp"
                 app:strokeColor="@color/status_expired_border" />
 
             <com.google.android.material.button.MaterialButton
@@ -86,12 +97,13 @@
                 android:layout_height="36dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:paddingHorizontal="12dp"
+                android:paddingHorizontal="14dp"
                 android:text="Consumed ✓"
                 android:textColor="@color/text_on_primary"
                 android:textSize="12sp"
-                app:backgroundTint="@color/primary" />
+                app:backgroundTint="@color/primary"
+                app:cornerRadius="10dp" />
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

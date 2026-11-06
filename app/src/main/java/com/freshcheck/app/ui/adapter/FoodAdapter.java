@@ -6,6 +6,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -60,6 +61,10 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         final FoodItem item = items.get(position);
 
         holder.tvFoodName.setText(item.getName());
+
+        if (holder.ivFoodIcon != null) {
+            holder.ivFoodIcon.setImageResource(R.drawable.ic_food);
+        }
 
         String details = String.format(Locale.US, "%.1f %s • %s • %s",
                 item.getQuantity(), item.getUnit(), item.getCategory(), item.getLocation());
@@ -136,6 +141,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
     }
 
     public static class FoodViewHolder extends RecyclerView.ViewHolder {
+        final ImageView ivFoodIcon;
         final TextView tvFoodName;
         final TextView tvFoodDetails;
         final TextView tvStatusBadge;
@@ -144,6 +150,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
 
         public FoodViewHolder(@NonNull View itemView) {
             super(itemView);
+            ivFoodIcon = itemView.findViewById(R.id.iv_food_icon);
             tvFoodName = itemView.findViewById(R.id.tv_food_name);
             tvFoodDetails = itemView.findViewById(R.id.tv_food_details);
             tvStatusBadge = itemView.findViewById(R.id.tv_status_badge);

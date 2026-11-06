@@ -11,12 +11,12 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Search Bar -->
+        <!-- Top Search & Sort Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_search_bar"
             android:orientation="horizontal"
             android:gravity="center_vertical"
@@ -27,14 +27,15 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:contentDescription="Search"
-                android:src="@drawable/ic_search" />
+                android:src="@drawable/ic_search"
+                app:tint="@color/text_secondary" />
 
             <EditText
                 android:id="@+id/et_search_food"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="42dp"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="10dp"
                 android:background="@null"
                 android:hint="@string/search_hint"
                 android:textColor="@color/text_primary"
@@ -47,9 +48,12 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:text="⇅ Sort"
                 android:textColor="@color/primary"
                 android:textSize="12sp"
+                android:textStyle="bold"
                 android:paddingHorizontal="8dp" />
         </LinearLayout>
 
@@ -57,35 +61,57 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="6dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <Spinner
-                android:id="@+id/spinner_category_filter"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/bg_search_bar" />
+                android:layout_marginEnd="6dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/surface">
 
-            <Spinner
-                android:id="@+id/spinner_location_filter"
+                <Spinner
+                    android:id="@+id/spinner_category_filter"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="6dp"
+                    android:background="@null" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
                 android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_search_bar" />
+                android:layout_marginStart="6dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <Spinner
+                    android:id="@+id/spinner_location_filter"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="6dp"
+                    android:background="@null" />
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- Status Filter Tabs / Chips -->
+        <!-- Status Filter Chips -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:scrollbars="none"
-            android:paddingHorizontal="12dp">
+            android:paddingHorizontal="16dp">
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chip_group_status"
@@ -129,48 +155,65 @@
             android:id="@+id/tv_inventory_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="14dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginHorizontal="18dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
             android:text="Showing 0 items"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <!-- Inventory List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_inventory"
+        <!-- Inventory List Container -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:paddingBottom="72dp" />
+            android:layout_weight="1">
 
-        <!-- Empty State -->
-        <LinearLayout
-            android:id="@+id/layout_empty_inventory"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="24dp"
-            android:visibility="gone">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_inventory"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="84dp" />
 
-            <ImageView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:contentDescription="Empty"
-                android:src="@drawable/ic_inventory"
-                app:tint="@color/text_hint" />
+            <!-- Empty State -->
+            <LinearLayout
+                android:id="@+id/layout_empty_inventory"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="32dp"
+                android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/empty_inventory"
-                android:textAlignment="center"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp" />
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/bg_search_bar"
+                    android:padding="20dp"
+                    android:contentDescription="Empty"
+                    android:src="@drawable/ic_inventory"
+                    app:tint="@color/primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Pantry is Empty"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Track your groceries and expiration dates in one place. Tap the button below to add your first item."
+                    android:textAlignment="center"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
     <!-- FAB: Add Food -->
@@ -179,10 +222,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="24dp"
         android:contentDescription="@string/action_add_food"
         android:src="@drawable/ic_add"
         app:backgroundTint="@color/primary"
-        app:tint="@color/text_on_primary" />
+        app:tint="@color/text_on_primary"
+        app:elevation="4dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

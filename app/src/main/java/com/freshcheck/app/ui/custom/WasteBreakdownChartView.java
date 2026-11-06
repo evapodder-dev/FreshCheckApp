@@ -9,6 +9,9 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import com.freshcheck.app.R;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -16,7 +19,8 @@ import java.util.Map;
 
 /**
  * Custom View that visualizes financial food waste breakdown
- * across categories (Spoiled, Past Expiry, Overcooked, Leftovers, Other).
+ * across categories (Spoiled, Past Expiry, Overcooked, Leftovers, Other)
+ * with full dark-theme adaptation and Bangladeshi Taka (৳).
  */
 public class WasteBreakdownChartView extends View {
     private Paint barBackgroundPaint;
@@ -48,21 +52,18 @@ public class WasteBreakdownChartView extends View {
 
     private void init() {
         barBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barBackgroundPaint.setColor(Color.parseColor("#EAEFEA"));
-
         barFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
         labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        labelPaint.setColor(Color.parseColor("#1C261C"));
+        valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        emptyTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        refreshThemePaints();
+
         labelPaint.setTextSize(spToPx(13));
         labelPaint.setFakeBoldText(true);
 
-        valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        valuePaint.setColor(Color.parseColor("#596659"));
         valuePaint.setTextSize(spToPx(12));
 
-        emptyTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        emptyTextPaint.setColor(Color.parseColor("#757575"));
         emptyTextPaint.setTextSize(spToPx(14));
         emptyTextPaint.setTextAlign(Paint.Align.CENTER);
 
@@ -72,6 +73,20 @@ public class WasteBreakdownChartView extends View {
         colorMap.put("Overcooked / Burned", Color.parseColor("#8E24AA"));  // Purple
         colorMap.put("Uneaten Leftover", Color.parseColor("#039BE5"));     // Blue
         colorMap.put("Other / Accidental", Color.parseColor("#78909C"));   // Slate Gray
+    }
+
+    private void refreshThemePaints() {
+        try {
+            barBackgroundPaint.setColor(ContextCompat.getColor(getContext(), R.color.surface_variant));
+            labelPaint.setColor(ContextCompat.getColor(getContext(), R.color.text_primary));
+            valuePaint.setColor(ContextCompat.getColor(getContext(), R.color.text_secondary));
+            emptyTextPaint.setColor(ContextCompat.getColor(getContext(), R.color.text_hint));
+        } catch (Exception e) {
+            barBackgroundPaint.setColor(Color.parseColor("#EAEFEA"));
+            labelPaint.setColor(Color.parseColor("#1C261C"));
+            valuePaint.setColor(Color.parseColor("#596659"));
+            emptyTextPaint.setColor(Color.parseColor("#757575"));
+        }
     }
 
     public void setData(Map<String, Float> data) {
@@ -87,7 +102,7 @@ public class WasteBreakdownChartView extends View {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int rows = Math.max(1, costByReason.size());
-        int rowHeight = (int) dpToPx(48);
+        int rowHeight = (int) dpToPx(52);
         int desiredHeight = (costByReason.isEmpty()) ? (int) dpToPx(110) : (rows * rowHeight + (int) dpToPx(16));
 
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -100,6 +115,7 @@ public class WasteBreakdownChartView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        refreshThemePaints();
 
         int width = getWidth();
         int height = getHeight();
@@ -121,7 +137,7 @@ public class WasteBreakdownChartView extends View {
         float paddingRight = dpToPx(12);
         float usableWidth = width - paddingLeft - paddingRight;
 
-        float currentY = dpToPx(18);
+        float currentY = dpToPx(20);
         float barHeight = dpToPx(10);
         float cornerRadius = dpToPx(5);
 
@@ -134,12 +150,12 @@ public class WasteBreakdownChartView extends View {
             // Draw reason label on left
             canvas.drawText(reason, paddingLeft, currentY, labelPaint);
 
-            // Draw cost & percentage text on right
-            String valueText = String.format(Locale.US, "$%.2f (%d%%)", cost, percentage);
+            // Draw cost & percentage text on right in Bangladeshi Taka (৳)
+            String valueText = String.format(Locale.US, "৳%.2f (%d%%)", cost, percentage);
             float valueWidth = valuePaint.measureText(valueText);
             canvas.drawText(valueText, width - paddingRight - valueWidth, currentY, valuePaint);
 
-            // Draw bar
+            // Draw bar background
             float barY = currentY + dpToPx(6);
             barBgRect.set(paddingLeft, barY, paddingLeft + usableWidth, barY + barHeight);
             canvas.drawRoundRect(barBgRect, cornerRadius, cornerRadius, barBackgroundPaint);
@@ -149,11 +165,11 @@ public class WasteBreakdownChartView extends View {
             barFillRect.set(paddingLeft, barY, paddingLeft + fillWidth, barY + barHeight);
 
             Integer barColor = colorMap.get(reason);
-            if (barColor == null) barColor = Color.parseColor("#4CAF50");
+            if (barColor == null) barColor = Color.parseColor("#3D946B");
             barFillPaint.setColor(barColor);
             canvas.drawRoundRect(barFillRect, cornerRadius, cornerRadius, barFillPaint);
 
-            currentY += dpToPx(48);
+            currentY += dpToPx(52);
         }
     }
 

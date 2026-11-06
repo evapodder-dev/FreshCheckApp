@@ -52,7 +52,7 @@ public class WasteAdapter extends RecyclerView.Adapter<WasteAdapter.WasteViewHol
         final WasteRecord item = items.get(position);
 
         holder.tvFoodName.setText(item.getFoodName());
-        holder.tvCost.setText(String.format(Locale.US, "-$%.2f", item.getEstimatedCost()));
+        holder.tvCost.setText(String.format(Locale.US, "-৳%.2f", item.getEstimatedCost()));
 
         String details = String.format(Locale.US, "%.1f %s • Discarded on %s",
                 item.getQuantity(), item.getUnit(), item.getWasteDate());

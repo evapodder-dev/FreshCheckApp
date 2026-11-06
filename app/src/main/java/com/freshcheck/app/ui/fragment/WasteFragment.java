@@ -82,7 +82,7 @@ public class WasteFragment extends Fragment implements WasteAdapter.OnWasteItemA
         double totalLoss = repository.getTotalFinancialLoss();
 
         tvTotalItems.setText(String.valueOf(totalItems));
-        tvTotalLoss.setText(String.format(Locale.US, "$%.2f", totalLoss));
+        tvTotalLoss.setText(String.format(Locale.US, "৳%.2f", totalLoss));
 
         // Update custom chart view
         Map<String, Float> costByReason = repository.getWasteCostByReason();

@@ -47,6 +47,7 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
     private static final String TAG = "DashboardFragment";
 
     private TextView tvGreeting;
+    private TextView tvAvatar;
     private TextView tvScopePill;
     private ExpiryStatusDonutView donutChartView;
     private TextView tvLegendFresh, tvLegendExpiring, tvLegendExpired;
@@ -68,6 +69,7 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
         householdRepository = new HouseholdRepository(requireContext());
 
         tvGreeting = view.findViewById(R.id.tv_dashboard_greeting);
+        tvAvatar = view.findViewById(R.id.tv_dashboard_avatar);
         tvScopePill = view.findViewById(R.id.tv_dashboard_scope_pill);
         donutChartView = view.findViewById(R.id.donut_chart_view);
         tvLegendFresh = view.findViewById(R.id.tv_legend_fresh);
@@ -127,6 +129,19 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             });
         }
 
+        // Quick action: Grocery List
+        View btnGrocery = view.findViewById(R.id.btn_action_grocery);
+        if (btnGrocery != null) {
+            btnGrocery.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).navigateToTab(R.id.nav_shopping);
+                    }
+                }
+            });
+        }
+
         // Quick action: Meal Planner
         View btnPlanner = view.findViewById(R.id.btn_action_planner);
         if (btnPlanner != null) {
@@ -155,18 +170,28 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             if (authManager.isUserLoggedIn()) {
                 String name = authManager.getUserDisplayName();
                 tvGreeting.setText("Hello, " + name);
+                if (tvAvatar != null && name != null && !name.trim().isEmpty()) {
+                    String[] parts = name.trim().split("\\s+");
+                    if (parts.length >= 2) {
+                        tvAvatar.setText(("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase());
+                    } else {
+                        tvAvatar.setText(("" + parts[0].charAt(0)).toUpperCase());
+                    }
+                }
             } else {
                 tvGreeting.setText("Welcome to FreshCheck");
+                if (tvAvatar != null) tvAvatar.setText("FC");
             }
         } catch (Exception e) {
             tvGreeting.setText("Welcome to FreshCheck");
+            if (tvAvatar != null) tvAvatar.setText("FC");
         }
 
         try {
             String activeScope = householdRepository.getActiveHouseholdName();
-            tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "Personal Pantry");
+            tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "🏡 Personal");
         } catch (Exception e) {
-            tvScopePill.setText("Personal Pantry");
+            tvScopePill.setText("🏡 Personal");
         }
     }
 

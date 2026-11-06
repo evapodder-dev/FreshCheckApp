@@ -2,17 +2,20 @@ package com.freshcheck.app.ui.custom;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import com.freshcheck.app.R;
 
 /**
- * Custom View that renders a donut chart illustrating
- * food inventory health (Fresh vs Expiring Soon vs Expired).
+ * Premium Custom View rendering a donut chart illustrating
+ * food inventory freshness (Fresh vs Expiring Soon vs Expired).
+ * Fully dynamic and theme-aware (Light & Dark themes).
  */
 public class ExpiryStatusDonutView extends View {
     private Paint freshPaint;
@@ -44,39 +47,40 @@ public class ExpiryStatusDonutView extends View {
     }
 
     private void init() {
-        float strokeWidth = dpToPx(24);
+        float strokeWidth = dpToPx(18);
 
         freshPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         freshPaint.setStyle(Paint.Style.STROKE);
         freshPaint.setStrokeWidth(strokeWidth);
-        freshPaint.setColor(Color.parseColor("#43A047")); // Green
-        freshPaint.setStrokeCap(Paint.Cap.BUTT);
+        freshPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_fresh));
+        freshPaint.setStrokeCap(Paint.Cap.ROUND);
 
         expiringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         expiringPaint.setStyle(Paint.Style.STROKE);
         expiringPaint.setStrokeWidth(strokeWidth);
-        expiringPaint.setColor(Color.parseColor("#FB8C00")); // Orange
-        expiringPaint.setStrokeCap(Paint.Cap.BUTT);
+        expiringPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_expiring));
+        expiringPaint.setStrokeCap(Paint.Cap.ROUND);
 
         expiredPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         expiredPaint.setStyle(Paint.Style.STROKE);
         expiredPaint.setStrokeWidth(strokeWidth);
-        expiredPaint.setColor(Color.parseColor("#E53935")); // Red
-        expiredPaint.setStrokeCap(Paint.Cap.BUTT);
+        expiredPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_expired));
+        expiredPaint.setStrokeCap(Paint.Cap.ROUND);
 
         backgroundRingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         backgroundRingPaint.setStyle(Paint.Style.STROKE);
         backgroundRingPaint.setStrokeWidth(strokeWidth);
-        backgroundRingPaint.setColor(Color.parseColor("#E8EFE8"));
+        backgroundRingPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_track));
+        backgroundRingPaint.setStrokeCap(Paint.Cap.ROUND);
 
         centerTextLargePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerTextLargePaint.setColor(Color.parseColor("#1C261C"));
-        centerTextLargePaint.setTextSize(spToPx(26));
+        centerTextLargePaint.setColor(ContextCompat.getColor(getContext(), R.color.text_primary));
+        centerTextLargePaint.setTextSize(spToPx(28));
         centerTextLargePaint.setTextAlign(Paint.Align.CENTER);
         centerTextLargePaint.setFakeBoldText(true);
 
         centerTextSmallPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerTextSmallPaint.setColor(Color.parseColor("#596659"));
+        centerTextSmallPaint.setColor(ContextCompat.getColor(getContext(), R.color.text_secondary));
         centerTextSmallPaint.setTextSize(spToPx(13));
         centerTextSmallPaint.setTextAlign(Paint.Align.CENTER);
     }
@@ -85,12 +89,24 @@ public class ExpiryStatusDonutView extends View {
         this.freshCount = Math.max(0, fresh);
         this.expiringCount = Math.max(0, expiring);
         this.expiredCount = Math.max(0, expired);
+        updateColors();
         invalidate();
+    }
+
+    private void updateColors() {
+        if (freshPaint != null) {
+            freshPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_fresh));
+            expiringPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_expiring));
+            expiredPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_expired));
+            backgroundRingPaint.setColor(ContextCompat.getColor(getContext(), R.color.chart_track));
+            centerTextLargePaint.setColor(ContextCompat.getColor(getContext(), R.color.text_primary));
+            centerTextSmallPaint.setColor(ContextCompat.getColor(getContext(), R.color.text_secondary));
+        }
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int desiredSize = (int) dpToPx(170);
+        int desiredSize = (int) dpToPx(160);
 
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -112,34 +128,32 @@ public class ExpiryStatusDonutView extends View {
         int height = getHeight();
         if (width <= 0 || height <= 0) return;
 
-        float strokeWidth = dpToPx(20);
+        float strokeWidth = dpToPx(18);
         freshPaint.setStrokeWidth(strokeWidth);
         expiringPaint.setStrokeWidth(strokeWidth);
         expiredPaint.setStrokeWidth(strokeWidth);
         backgroundRingPaint.setStrokeWidth(strokeWidth);
 
-        float padding = strokeWidth / 2f + dpToPx(6);
+        float padding = strokeWidth / 2f + dpToPx(4);
         ovalRect.set(padding, padding, width - padding, height - padding);
 
         int total = freshCount + expiringCount + expiredCount;
 
+        // Draw track ring
+        canvas.drawArc(ovalRect, 0, 360, false, backgroundRingPaint);
+
         if (total == 0) {
-            // Empty state ring
-            canvas.drawArc(ovalRect, 0, 360, false, backgroundRingPaint);
-            canvas.drawText("0", width / 2f, height / 2f - dpToPx(2), centerTextLargePaint);
-            canvas.drawText("Items", width / 2f, height / 2f + dpToPx(18), centerTextSmallPaint);
+            canvas.drawText("0%", width / 2f, height / 2f - dpToPx(1), centerTextLargePaint);
+            canvas.drawText("Freshness", width / 2f, height / 2f + dpToPx(18), centerTextSmallPaint);
             return;
         }
 
-        // Base ring
-        canvas.drawArc(ovalRect, 0, 360, false, backgroundRingPaint);
+        float startAngle = -90f; // 12 o'clock
 
-        float startAngle = -90f; // Start at top 12 o'clock
-
-        // Fresh segment
-        if (freshCount > 0) {
-            float sweep = (freshCount / (float) total) * 360f;
-            canvas.drawArc(ovalRect, startAngle, sweep, false, freshPaint);
+        // Expired segment
+        if (expiredCount > 0) {
+            float sweep = (expiredCount / (float) total) * 360f;
+            canvas.drawArc(ovalRect, startAngle, sweep, false, expiredPaint);
             startAngle += sweep;
         }
 
@@ -150,16 +164,16 @@ public class ExpiryStatusDonutView extends View {
             startAngle += sweep;
         }
 
-        // Expired segment
-        if (expiredCount > 0) {
-            float sweep = (expiredCount / (float) total) * 360f;
-            canvas.drawArc(ovalRect, startAngle, sweep, false, expiredPaint);
+        // Fresh segment
+        if (freshCount > 0) {
+            float sweep = (freshCount / (float) total) * 360f;
+            canvas.drawArc(ovalRect, startAngle, sweep, false, freshPaint);
         }
 
-        // Center labels: Fresh % or Total Count
+        // Center typography: Freshness %
         int freshPercentage = (int) Math.round((freshCount / (float) total) * 100);
-        canvas.drawText(freshPercentage + "%", width / 2f, height / 2f - dpToPx(2), centerTextLargePaint);
-        canvas.drawText("Fresh", width / 2f, height / 2f + dpToPx(18), centerTextSmallPaint);
+        canvas.drawText(freshPercentage + "%", width / 2f, height / 2f - dpToPx(1), centerTextLargePaint);
+        canvas.drawText("Freshness", width / 2f, height / 2f + dpToPx(18), centerTextSmallPaint);
     }
 
     private float dpToPx(float dp) {

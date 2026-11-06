@@ -4,10 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
+    android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="5dp"
-    app:cardCornerRadius="10dp"
-    app:cardElevation="1dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
     app:strokeColor="@color/card_border"
     app:strokeWidth="1dp"
     app:cardBackgroundColor="@color/card_background">
@@ -15,7 +15,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:padding="14dp">
 
         <TextView
             android:id="@+id/tv_waste_food_name"
@@ -33,7 +33,7 @@
             android:id="@+id/tv_waste_cost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="-$3.80"
+            android:text="-৳3.80"
             android:textColor="@color/status_expired"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -42,12 +42,13 @@
 
         <ImageButton
             android:id="@+id/btn_delete_waste"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Delete"
             android:src="@drawable/ic_delete"
+            app:tint="@color/text_secondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -68,9 +69,9 @@
             android:id="@+id/tv_waste_reason_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/bg_badge_expired"
-            android:paddingHorizontal="8dp"
+            android:paddingHorizontal="10dp"
             android:paddingVertical="3dp"
             android:text="Spoiled / Moldy"
             android:textColor="@color/status_expired"

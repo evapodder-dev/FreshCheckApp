@@ -1,30 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark mode colors -->
-    <color name="primary">#81C784</color>
-    <color name="primary_dark">#4CAF50</color>
-    <color name="primary_light">#E8F5E9</color>
-    <color name="accent">#66BB6A</color>
-    <color name="accent_light">#C8E6C9</color>
-    <color name="background">#121212</color>
-    <color name="surface">#1E1E1E</color>
-    <color name="surface_variant">#2C2C2C</color>
-    <color name="card_background">#1E1E1E</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#CCCCCC</color>
-    <color name="text_hint">#AAAAAA</color>
-    <color name="text_on_primary">#000000</color>
-    <!-- Keep other status colors same or adjust if needed -->
-    <color name="status_fresh">#81C784</color>
-    <color name="status_fresh_bg">#2E7D32</color>
-    <color name="status_fresh_border">#66BB6A</color>
-    <color name="status_expiring">#FFB74D</color>
-    <color name="status_expiring_bg">#EF6C00</color>
-    <color name="status_expiring_border">#FFCC80</color>
-    <color name="status_today">#FF8A80</color>
-    <color name="status_today_bg">#B71C1C</color>
-    <color name="status_today_border">#FFAB91</color>
-    <color name="status_expired">#EF5350</color>
-    <color name="status_expired_bg">#C62828</color>
-    <color name="status_expired_border">#EF9A9A</color>
+    <!-- FreshCheck Design System — Dark Theme Palette -->
+    <!-- Primary Brand Colors -->
+    <color name="primary">#4FB583</color>              <!-- Soft Mint/Fresh Green for dark surface -->
+    <color name="primary_variant">#3D8B65</color>
+    <color name="primary_dark">#121A16</color>
+    <color name="primary_light">#24342B</color>
+    <color name="accent">#4FB583</color>
+    <color name="accent_light">#B9E4CE</color>
+    <color name="mint_soft">#22362C</color>
+
+    <!-- Dark Background & Surfaces -->
+    <color name="background">#121A16</color>           <!-- Dark Background -->
+    <color name="surface">#1C2821</color>              <!-- Dark Surface -->
+    <color name="surface_variant">#24342B</color>      <!-- Elevated Surface -->
+    <color name="card_background">#1C2821</color>      <!-- Dark Card Background -->
+    <color name="card_border">#2A3C31</color>          <!-- Subtle Dark Border -->
+    <color name="divider">#26382D</color>              <!-- Hairline Divider in Dark Mode -->
+
+    <!-- Typography Tokens -->
+    <color name="text_primary">#F1F5F1</color>         <!-- Crisp Off-White -->
+    <color name="text_secondary">#A6B4AA</color>       <!-- Muted Light Sage -->
+    <color name="text_hint">#697B6E</color>            <!-- Dark Hint Grey -->
+    <color name="text_on_primary">#121A16</color>      <!-- Dark Text on Bright Green -->
+    <color name="text_on_accent">#121A16</color>
+
+    <!-- Expiry Status Tokens (Adjusted for Dark Mode Contrast) -->
+    <!-- Fresh Status: #4FB583 -->
+    <color name="status_fresh">#4FB583</color>
+    <color name="status_fresh_bg">#183B2C</color>
+    <color name="status_fresh_border">#285741</color>
+
+    <!-- Expiring Soon Status: #F0B354 -->
+    <color name="status_expiring">#F0B354</color>
+    <color name="status_expiring_bg">#3E2F1A</color>
+    <color name="status_expiring_border">#664D29</color>
+
+    <!-- Expires Today Status: #F08B5B -->
+    <color name="status_today">#F08B5B</color>
+    <color name="status_today_bg">#40241A</color>
+    <color name="status_today_border">#6B3B2B</color>
+
+    <!-- Expired Status: #E66864 -->
+    <color name="status_expired">#E66864</color>
+    <color name="status_expired_bg">#3D1E1E</color>
+    <color name="status_expired_border">#692F2F</color>
+
+    <!-- Chart & Visual Data Tokens -->
+    <color name="chart_fresh">#4FB583</color>
+    <color name="chart_expiring">#F0B354</color>
+    <color name="chart_today">#F08B5B</color>
+    <color name="chart_expired">#E66864</color>
+    <color name="chart_consumed">#64B5F6</color>
+    <color name="chart_track">#24342B</color>
+
+    <!-- Waste Breakdown Categories -->
+    <color name="waste_spoiled">#E66864</color>
+    <color name="waste_expired">#F0B354</color>
+    <color name="waste_overcooked">#BB86FC</color>
+    <color name="waste_leftover">#4FC3F7</color>
+    <color name="waste_other">#9E9E9E</color>
+
+    <!-- Navigation & Component Elevation Shadows -->
+    <color name="nav_selected">#4FB583</color>
+    <color name="nav_unselected">#A6B4AA</color>
+    <color name="nav_pill">#24342B</color>
 </resources>
