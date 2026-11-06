@@ -48,6 +48,9 @@ public class ProfileFragment extends Fragment {
     private TextView tvUserEmail;
     private TextView tvProviderBadge;
     private TextView tvScope;
+    private View btnSignIn;
+    private View btnSignOut;
+    private View cardProfileHeader;
 
     @Nullable
     @Override
@@ -65,6 +68,29 @@ public class ProfileFragment extends Fragment {
         tvUserEmail = view.findViewById(R.id.tv_profile_user_email);
         tvProviderBadge = view.findViewById(R.id.tv_profile_provider_badge);
         tvScope = view.findViewById(R.id.tv_profile_scope);
+        cardProfileHeader = view.findViewById(R.id.card_profile_header);
+        btnSignIn = view.findViewById(R.id.btn_profile_sign_in);
+        btnSignOut = view.findViewById(R.id.btn_profile_sign_out);
+
+        // Header click -> Open Auth
+        if (cardProfileHeader != null) {
+            cardProfileHeader.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(getContext(), AuthActivity.class));
+                }
+            });
+        }
+
+        // Sign In button click -> Open Auth
+        if (btnSignIn != null) {
+            btnSignIn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(getContext(), AuthActivity.class));
+                }
+            });
+        }
 
         // Click listeners for smart modules
         view.findViewById(R.id.btn_manage_household).setOnClickListener(new View.OnClickListener() {
@@ -137,35 +163,58 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        view.findViewById(R.id.btn_profile_sign_out).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                confirmSignOut();
-            }
-        });
+        if (btnSignOut != null) {
+            btnSignOut.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    confirmSignOut();
+                }
+            });
+        }
 
         updateProfileUI();
         return view;
     }
 
     private void updateProfileUI() {
-        String name = authManager.getUserDisplayName();
-        String email = authManager.getUserEmail();
-        String provider = authManager.getAuthProvider();
+        if (!isAdded() || getContext() == null) return;
 
-        tvUserName.setText(name);
-        tvUserEmail.setText(email);
-        tvProviderBadge.setText(provider + " Account");
+        boolean isLoggedIn = authManager.isUserLoggedIn();
+        if (isLoggedIn) {
+            String name = authManager.getUserDisplayName();
+            String email = authManager.getUserEmail();
+            String provider = authManager.getAuthProvider();
 
-        if (name != null && !name.trim().isEmpty()) {
-            String[] parts = name.trim().split("\\s+");
-            if (parts.length >= 2) {
-                tvAvatar.setText(("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase());
+            tvUserName.setText(name);
+            tvUserEmail.setText(email);
+            String badgeText = (provider != null && provider.toLowerCase().contains("account")) ? provider : provider + " Account";
+            tvProviderBadge.setText(badgeText);
+            tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
+            tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_fresh));
+
+            if (name != null && !name.trim().isEmpty()) {
+                String[] parts = name.trim().split("\\s+");
+                if (parts.length >= 2) {
+                    tvAvatar.setText(("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase());
+                } else {
+                    tvAvatar.setText(("" + parts[0].charAt(0)).toUpperCase());
+                }
             } else {
-                tvAvatar.setText(("" + parts[0].charAt(0)).toUpperCase());
+                tvAvatar.setText("FC");
             }
+
+            if (btnSignIn != null) btnSignIn.setVisibility(View.GONE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
         } else {
-            tvAvatar.setText("FC");
+            tvUserName.setText("Guest / Local User");
+            tvUserEmail.setText("Tap to sign in or create an account");
+            tvProviderBadge.setText("Offline Mode");
+            tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_expiring);
+            tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_expiring));
+            tvAvatar.setText("?");
+
+            if (btnSignIn != null) btnSignIn.setVisibility(View.VISIBLE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.GONE);
         }
 
         String scopeName = householdRepo.getActiveHouseholdName();

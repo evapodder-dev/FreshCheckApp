@@ -38,6 +38,9 @@ public class AuthActivity extends AppCompatActivity {
     private TextView tvAuthLog;
     private TextView tvStatusRtdb;
     private TextView tvStatusFirestore;
+    private com.google.android.material.textfield.TextInputEditText etAuthName;
+    private com.google.android.material.textfield.TextInputEditText etAuthEmail;
+    private com.google.android.material.textfield.TextInputEditText etAuthPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,9 @@ public class AuthActivity extends AppCompatActivity {
         tvAuthLog = findViewById(R.id.tv_auth_log);
         tvStatusRtdb = findViewById(R.id.tv_status_rtdb);
         tvStatusFirestore = findViewById(R.id.tv_status_firestore);
+        etAuthName = findViewById(R.id.et_auth_name);
+        etAuthEmail = findViewById(R.id.et_auth_email);
+        etAuthPassword = findViewById(R.id.et_auth_password);
 
         if (firebaseManager.isRealtimeDatabaseAvailable()) {
             tvStatusRtdb.setText("Realtime Database Connected");
@@ -93,6 +99,58 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        // Quick Demo Sign-Ins
+        View btnDemoEva = findViewById(R.id.btn_demo_eva);
+        if (btnDemoEva != null) {
+            btnDemoEva.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showLoading("Signing in as Eva Podder (Admin)...");
+                    authManager.signInAsDemoUser("Eva Podder", "evapodder@freshcheck.app", "Admin Account", createAuthCallback("Demo Admin"));
+                }
+            });
+        }
+
+        View btnDemoRoommate = findViewById(R.id.btn_demo_roommate);
+        if (btnDemoRoommate != null) {
+            btnDemoRoommate.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showLoading("Signing in as Mess Roommate...");
+                    authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", "Mess Roommate", createAuthCallback("Mess Roommate"));
+                }
+            });
+        }
+
+        // Email & Password Sign-In
+        View btnSignInEmail = findViewById(R.id.btn_sign_in_email);
+        if (btnSignInEmail != null) {
+            btnSignInEmail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String email = etAuthEmail != null && etAuthEmail.getText() != null ? etAuthEmail.getText().toString().trim() : "";
+                    String password = etAuthPassword != null && etAuthPassword.getText() != null ? etAuthPassword.getText().toString().trim() : "";
+                    showLoading("Signing in with Email...");
+                    authManager.signInWithEmail(email, password, createAuthCallback("Email"));
+                }
+            });
+        }
+
+        // Email & Password Register
+        View btnRegisterEmail = findViewById(R.id.btn_register_email);
+        if (btnRegisterEmail != null) {
+            btnRegisterEmail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String name = etAuthName != null && etAuthName.getText() != null ? etAuthName.getText().toString().trim() : "";
+                    String email = etAuthEmail != null && etAuthEmail.getText() != null ? etAuthEmail.getText().toString().trim() : "";
+                    String password = etAuthPassword != null && etAuthPassword.getText() != null ? etAuthPassword.getText().toString().trim() : "";
+                    showLoading("Creating account...");
+                    authManager.registerWithEmail(name, email, password, createAuthCallback("Email"));
+                }
+            });
+        }
+
         // 1. Google Sign-In
         findViewById(R.id.btn_sign_in_google).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,6 +218,16 @@ public class AuthActivity extends AppCompatActivity {
                 tvAuthLog.setText("✓ Signed in successfully with " + provider + "\nWelcome, " + name + "!");
                 Toast.makeText(AuthActivity.this, "Welcome, " + name + "!", Toast.LENGTH_SHORT).show();
                 updateUI();
+
+                // Smoothly finish after brief confirmation so user returns to previous screen
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!isFinishing()) {
+                            finish();
+                        }
+                    }
+                }, 900);
             }
 
             @Override

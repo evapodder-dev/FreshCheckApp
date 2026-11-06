@@ -28,6 +28,7 @@ import com.freshcheck.app.model.CategoryConstants;
 import com.freshcheck.app.model.FoodItem;
 import com.freshcheck.app.model.WasteRecord;
 import com.freshcheck.app.ui.activity.AddEditFoodActivity;
+import com.freshcheck.app.ui.activity.AuthActivity;
 import com.freshcheck.app.ui.activity.FoodScannerActivity;
 import com.freshcheck.app.ui.activity.HouseholdActivity;
 import com.freshcheck.app.ui.activity.MainActivity;
@@ -98,6 +99,16 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
                 startActivity(intent);
             }
         });
+
+        // Profile Avatar or Greeting click -> Open Auth
+        View.OnClickListener openAuthListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getContext(), AuthActivity.class));
+            }
+        };
+        if (tvAvatar != null) tvAvatar.setOnClickListener(openAuthListener);
+        if (tvGreeting != null) tvGreeting.setOnClickListener(openAuthListener);
 
         // See all inventory link
         view.findViewById(R.id.tv_see_all_inventory).setOnClickListener(new View.OnClickListener() {

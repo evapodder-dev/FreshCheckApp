@@ -17,8 +17,11 @@
 
         <!-- User Profile Header Card -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_profile_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
             app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/card_border"
@@ -45,7 +48,7 @@
                         android:background="@drawable/bg_avatar_circle"
                         android:gravity="center"
                         android:text="FC"
-                        android:textColor="@color/primary"
+                        android:textColor="@color/text_on_primary"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
@@ -680,7 +683,21 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Sign Out Button -->
+        <!-- Sign In Button (Shown when user is signed out) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_profile_sign_in"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="32dp"
+            android:text="Sign In / Create Account"
+            android:textColor="@color/text_on_primary"
+            app:backgroundTint="@color/primary"
+            app:icon="@drawable/ic_account"
+            app:iconTint="@color/text_on_primary"
+            app:cornerRadius="12dp" />
+
+        <!-- Sign Out Button (Shown when user is signed in) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_profile_sign_out"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
