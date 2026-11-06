@@ -1,7 +1,11 @@
 *.iml
 .gradle
 /local.properties
-/.idea/
+/.idea/*
+!/.idea/runConfigurations/
+!/.idea/runConfigurations/*
+!/.idea/misc.xml
+!/.idea/gradle.xml
 .DS_Store
 /build
 app/build/
