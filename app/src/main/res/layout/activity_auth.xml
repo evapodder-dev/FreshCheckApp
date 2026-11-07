@@ -295,7 +295,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
-                        android:text="👤 Sign In as Eva Podder (Admin)"
+                        android:text="👑 Sign In as Eva Podder (Admin)"
                         android:textColor="@color/text_on_primary"
                         android:textSize="13sp"
                         app:backgroundTint="@color/primary"
@@ -307,10 +307,22 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
-                        android:text="👥 Sign In as Roommate (Mess)"
+                        android:text="👥 Sign In as Tanvir Ahmed (Roommate)"
                         android:textColor="@color/primary"
                         android:textSize="13sp"
                         app:strokeColor="@color/primary"
+                        app:cornerRadius="10dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_demo_new_user"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:text="🌱 Sign In as New User (Fresh Starter)"
+                        android:textColor="@color/accent"
+                        android:textSize="13sp"
+                        app:strokeColor="@color/accent"
                         app:cornerRadius="10dp" />
 
                     <!-- Email & Password Authentication -->

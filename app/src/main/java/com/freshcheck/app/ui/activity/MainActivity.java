@@ -27,6 +27,7 @@ import com.freshcheck.app.service.InventoryAuditService;
 import com.freshcheck.app.ui.fragment.AuthFragment;
 import com.freshcheck.app.ui.fragment.DashboardFragment;
 import com.freshcheck.app.ui.fragment.InventoryFragment;
+import com.freshcheck.app.ui.fragment.ProfileFragment;
 import com.freshcheck.app.ui.fragment.RecipesFragment;
 import com.freshcheck.app.ui.fragment.ShoppingFragment;
 import com.freshcheck.app.util.NotificationHelper;
@@ -107,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_shopping) {
                 selectedFragment = new ShoppingFragment();
             } else if (itemId == R.id.nav_profile) {
-                selectedFragment = new com.freshcheck.app.ui.fragment.ProfileFragment();
+                selectedFragment = new ProfileFragment();
             }
 
             if (selectedFragment != null) {

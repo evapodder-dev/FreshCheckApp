@@ -207,6 +207,28 @@ public class HouseholdRepository {
         setActiveHousehold("", "Personal Pantry");
     }
 
+    public HouseholdGroup ensureDemoMessGroup() {
+        HouseholdGroup group = getById("mess_room_304");
+        if (group == null) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            group = new HouseholdGroup(0, "mess_room_304", "Room 304 Mess (Hostel)", "MESS-304", "demo_admin_eva", System.currentTimeMillis(), 3);
+            db.insert(DatabaseHelper.TABLE_HOUSEHOLDS, null, group.toContentValues());
+
+            HouseholdMember admin = new HouseholdMember(0, "mess_room_304", "demo_admin_eva", "Eva Podder", "admin", System.currentTimeMillis() - 86400000L * 5);
+            HouseholdMember roommate = new HouseholdMember(0, "mess_room_304", "demo_roommate_tanvir", "Tanvir Ahmed", "member", System.currentTimeMillis() - 86400000L * 3);
+            HouseholdMember member3 = new HouseholdMember(0, "mess_room_304", "demo_roommate_rahim", "Rahim Chowdhury", "member", System.currentTimeMillis() - 86400000L * 2);
+
+            db.insert(DatabaseHelper.TABLE_HOUSEHOLD_MEMBERS, null, admin.toContentValues());
+            db.insert(DatabaseHelper.TABLE_HOUSEHOLD_MEMBERS, null, roommate.toContentValues());
+            db.insert(DatabaseHelper.TABLE_HOUSEHOLD_MEMBERS, null, member3.toContentValues());
+
+            logActivity("mess_room_304", "demo_admin_eva", "Eva Podder", "Created Room 304 Mess");
+            logActivity("mess_room_304", "demo_roommate_tanvir", "Tanvir Ahmed", "Added 5L Cooking Oil to shared pantry");
+            logActivity("mess_room_304", "demo_roommate_rahim", "Rahim Chowdhury", "Consumed 4 Organic Eggs for breakfast");
+        }
+        return group;
+    }
+
     private HouseholdGroup cursorToGroup(Cursor c) {
         return new HouseholdGroup(
                 c.getLong(c.getColumnIndexOrThrow("_id")),

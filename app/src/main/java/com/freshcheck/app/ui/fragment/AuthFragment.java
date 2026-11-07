@@ -110,7 +110,16 @@ public class AuthFragment extends Fragment {
         if (btnDemoRoommate != null) {
             btnDemoRoommate.setOnClickListener(v -> {
                 showLoading("Signing in as Mess Roommate...");
-                authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", "Mess Roommate", createAuthCallback("Mess Roommate"));
+                authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createAuthCallback("Mess Roommate"));
+            });
+        }
+
+        // Demo New User (Starter Profile)
+        View btnDemoNewUser = view.findViewById(R.id.btn_demo_new_user);
+        if (btnDemoNewUser != null) {
+            btnDemoNewUser.setOnClickListener(v -> {
+                showLoading("Signing in as New User (Starter)...");
+                authManager.signInAsDemoUser("New User", "newuser@freshcheck.app", FirebaseAuthManager.ROLE_NEW_USER, createAuthCallback("New User"));
             });
         }
 
@@ -270,9 +279,14 @@ public class AuthFragment extends Fragment {
             String provider = authManager.getAuthProvider();
             String uid = authManager.getUserId();
 
+            String role = authManager.getUserRole();
+            String roleBadge = FirebaseAuthManager.ROLE_ADMIN.equalsIgnoreCase(role) ? "🛡️ Admin Account"
+                    : FirebaseAuthManager.ROLE_ROOMMATE.equalsIgnoreCase(role) ? "👥 Mess Roommate"
+                    : "🌱 New Food Saver (Starter)";
+
             if (tvProfileName != null) tvProfileName.setText(name.isEmpty() ? "Signed-In User" : name);
             if (tvProfileEmail != null) tvProfileEmail.setText(email.isEmpty() ? "No email provided" : email);
-            if (tvProfileProvider != null) tvProfileProvider.setText(provider.isEmpty() ? "Firebase Anonymous" : provider);
+            if (tvProfileProvider != null) tvProfileProvider.setText(roleBadge);
             if (tvProfileUid != null) tvProfileUid.setText("UID: " + (uid.isEmpty() ? "offline_guest" : uid));
 
             if (tvAvatarInitials != null) {

@@ -52,6 +52,11 @@ public class ProfileFragment extends Fragment {
     private View btnSignIn;
     private View btnSignOut;
     private View cardProfileHeader;
+    private View cardRoleBanner;
+    private TextView tvRoleBannerIcon;
+    private TextView tvRoleBannerTitle;
+    private TextView tvRoleBannerDesc;
+    private TextView tvRoleBannerDetails;
 
     @Nullable
     @Override
@@ -72,6 +77,11 @@ public class ProfileFragment extends Fragment {
         cardProfileHeader = view.findViewById(R.id.card_profile_header);
         btnSignIn = view.findViewById(R.id.btn_profile_sign_in);
         btnSignOut = view.findViewById(R.id.btn_profile_sign_out);
+        cardRoleBanner = view.findViewById(R.id.card_role_banner);
+        tvRoleBannerIcon = view.findViewById(R.id.tv_role_banner_icon);
+        tvRoleBannerTitle = view.findViewById(R.id.tv_role_banner_title);
+        tvRoleBannerDesc = view.findViewById(R.id.tv_role_banner_desc);
+        tvRoleBannerDetails = view.findViewById(R.id.tv_role_banner_details);
 
         // Header click -> Open Auth Details
         if (cardProfileHeader != null) {
@@ -194,14 +204,49 @@ public class ProfileFragment extends Fragment {
         if (isLoggedIn) {
             String name = authManager.getUserDisplayName();
             String email = authManager.getUserEmail();
-            String provider = authManager.getAuthProvider();
+            String role = authManager.getUserRole();
 
             tvUserName.setText(name);
             tvUserEmail.setText(email);
-            String badgeText = (provider != null && provider.toLowerCase().contains("account")) ? provider : provider + " Account";
-            tvProviderBadge.setText(badgeText);
-            tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
-            tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_fresh));
+
+            if (FirebaseAuthManager.ROLE_ADMIN.equalsIgnoreCase(role)) {
+                tvProviderBadge.setText("🛡️ Household Admin & Pantry Owner");
+                tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
+                tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_fresh));
+                tvAvatar.setBackgroundResource(R.drawable.bg_avatar_circle);
+
+                if (cardRoleBanner != null) {
+                    cardRoleBanner.setVisibility(View.VISIBLE);
+                    if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("👑");
+                    if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("Household Admin Control Center");
+                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Full administrative privileges for Eva's Pantry & Mess.");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Full Pantry Control: Add, edit, or delete any household item\n• Invite Code Management: Generate & share codes (MESS-304)\n• Cloud Backup & Analytics: Realtime sync and full JSON/CSV export");
+                }
+            } else if (FirebaseAuthManager.ROLE_ROOMMATE.equalsIgnoreCase(role)) {
+                tvProviderBadge.setText("👥 Shared Mess Roommate");
+                tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_expiring);
+                tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_expiring));
+
+                if (cardRoleBanner != null) {
+                    cardRoleBanner.setVisibility(View.VISIBLE);
+                    if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("🤝");
+                    if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("Roommate Mess Hub (Room 304)");
+                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Active member of Room 304 Mess (Admin: Eva Podder).");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Shared Inventory: Add groceries & track shared expiry dates\n• Consume & Cook: Mark shared groceries as consumed\n• Meal Planner: Collaborate on weekly hostel/mess meal schedules");
+                }
+            } else {
+                tvProviderBadge.setText("🌱 Personal Food Saver (Starter)");
+                tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
+                tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.accent));
+
+                if (cardRoleBanner != null) {
+                    cardRoleBanner.setVisibility(View.VISIBLE);
+                    if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("🌱");
+                    if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("New User Quick Start Guide");
+                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Welcome to FreshCheck! Start building your smart pantry.");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("1. Tap '+ Add' on Dashboard to log your first food item\n2. Use AI Camera Scanner to recognize fresh produce\n3. Join a roommate mess with an invite code or create your own");
+                }
+            }
 
             if (name != null && !name.trim().isEmpty()) {
                 String[] parts = name.trim().split("\\s+");
@@ -224,6 +269,7 @@ public class ProfileFragment extends Fragment {
             tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_expiring));
             tvAvatar.setText("?");
 
+            if (cardRoleBanner != null) cardRoleBanner.setVisibility(View.GONE);
             if (btnSignIn != null) btnSignIn.setVisibility(View.VISIBLE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.GONE);
         }

@@ -197,7 +197,15 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
             FirebaseAuthManager authManager = FirebaseAuthManager.getInstance(requireContext());
             if (authManager.isUserLoggedIn()) {
                 String name = authManager.getUserDisplayName();
-                tvGreeting.setText("Hello, " + name);
+                String role = authManager.getUserRole();
+                if (FirebaseAuthManager.ROLE_ADMIN.equalsIgnoreCase(role)) {
+                    tvGreeting.setText("Hello, " + name + " 👑");
+                } else if (FirebaseAuthManager.ROLE_ROOMMATE.equalsIgnoreCase(role)) {
+                    tvGreeting.setText("Hello, " + name + " 👥");
+                } else {
+                    tvGreeting.setText("Welcome, " + name + " 🌱");
+                }
+
                 if (tvAvatar != null && name != null && !name.trim().isEmpty()) {
                     String[] parts = name.trim().split("\\s+");
                     if (parts.length >= 2) {
@@ -217,9 +225,9 @@ public class DashboardFragment extends Fragment implements UseFirstAdapter.OnUse
 
         try {
             String activeScope = householdRepository.getActiveHouseholdName();
-            tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "🏡 Personal");
+            tvScopePill.setText(activeScope != null && !activeScope.isEmpty() ? activeScope : "🏡 Personal Pantry");
         } catch (Exception e) {
-            tvScopePill.setText("🏡 Personal");
+            tvScopePill.setText("🏡 Personal Pantry");
         }
     }
 

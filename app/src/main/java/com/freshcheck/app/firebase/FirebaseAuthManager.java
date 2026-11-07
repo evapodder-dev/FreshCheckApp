@@ -55,6 +55,11 @@ public class FirebaseAuthManager {
     private static final String KEY_EMAIL = "email";
     private static final String KEY_PROVIDER = "provider";
     private static final String KEY_UID = "uid";
+    public static final String KEY_ROLE = "user_role";
+
+    public static final String ROLE_ADMIN = "ADMIN";
+    public static final String ROLE_ROOMMATE = "ROOMMATE";
+    public static final String ROLE_NEW_USER = "NEW_USER";
 
     public static final String PROVIDER_EMAIL = "Email";
     public static final String PROVIDER_GOOGLE = "Google";
@@ -181,6 +186,36 @@ public class FirebaseAuthManager {
         return prefs.getString(KEY_PROVIDER, PROVIDER_NONE);
     }
 
+    public String getUserRole() {
+        if (!isUserLoggedIn()) {
+            return ROLE_NEW_USER;
+        }
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String role = prefs.getString(KEY_ROLE, "");
+        if (role != null && !role.isEmpty()) {
+            return role;
+        }
+        String email = getUserEmail().toLowerCase();
+        if (email.contains("evapodder") || email.contains("admin")) {
+            return ROLE_ADMIN;
+        } else if (email.contains("tanvir") || email.contains("roommate") || email.contains("mess")) {
+            return ROLE_ROOMMATE;
+        }
+        return ROLE_NEW_USER;
+    }
+
+    public boolean isAdmin() {
+        return ROLE_ADMIN.equalsIgnoreCase(getUserRole());
+    }
+
+    public boolean isRoommate() {
+        return ROLE_ROOMMATE.equalsIgnoreCase(getUserRole());
+    }
+
+    public boolean isNewUser() {
+        return ROLE_NEW_USER.equalsIgnoreCase(getUserRole());
+    }
+
     // ================= EMAIL & PASSWORD AUTH =================
 
     public void signInWithEmail(final String email, final String password, final AuthCallback callback) {
@@ -207,19 +242,28 @@ public class FirebaseAuthManager {
                                 FirebaseUser user = mAuth.getCurrentUser();
                                 String name = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
                                         ? user.getDisplayName() : derivedName;
-                                saveAuthState(true, name, cleanEmail, PROVIDER_EMAIL, user.getUid());
+                                String role = cleanEmail.contains("admin") || cleanEmail.contains("evapodder") ? ROLE_ADMIN :
+                                             cleanEmail.contains("tanvir") || cleanEmail.contains("roommate") ? ROLE_ROOMMATE : ROLE_NEW_USER;
+                                saveAuthState(true, name, cleanEmail, PROVIDER_EMAIL, user.getUid(), role);
+                                configureUserWorkspace(context, role, name);
                                 postSuccess(callback, PROVIDER_EMAIL, name, cleanEmail, user.getUid());
                             } else {
                                 Log.w(TAG, "Firebase email sign-in fallback: " + (task.getException() != null ? task.getException().getMessage() : "offline"));
                                 String uid = "email_" + Math.abs(cleanEmail.hashCode());
-                                saveAuthState(true, derivedName, cleanEmail, PROVIDER_EMAIL, uid);
+                                String role = cleanEmail.contains("admin") || cleanEmail.contains("evapodder") ? ROLE_ADMIN :
+                                             cleanEmail.contains("tanvir") || cleanEmail.contains("roommate") ? ROLE_ROOMMATE : ROLE_NEW_USER;
+                                saveAuthState(true, derivedName, cleanEmail, PROVIDER_EMAIL, uid, role);
+                                configureUserWorkspace(context, role, derivedName);
                                 postSuccess(callback, PROVIDER_EMAIL, derivedName, cleanEmail, uid);
                             }
                         }
                     });
         } else {
             String uid = "email_" + Math.abs(cleanEmail.hashCode());
-            saveAuthState(true, derivedName, cleanEmail, PROVIDER_EMAIL, uid);
+            String role = cleanEmail.contains("admin") || cleanEmail.contains("evapodder") ? ROLE_ADMIN :
+                         cleanEmail.contains("tanvir") || cleanEmail.contains("roommate") ? ROLE_ROOMMATE : ROLE_NEW_USER;
+            saveAuthState(true, derivedName, cleanEmail, PROVIDER_EMAIL, uid, role);
+            configureUserWorkspace(context, role, derivedName);
             postSuccess(callback, PROVIDER_EMAIL, derivedName, cleanEmail, uid);
         }
     }
@@ -253,27 +297,37 @@ public class FirebaseAuthManager {
                                 user.updateProfile(new UserProfileChangeRequest.Builder()
                                         .setDisplayName(cleanName)
                                         .build());
-                                saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, user.getUid());
+                                saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, user.getUid(), ROLE_NEW_USER);
+                                configureUserWorkspace(context, ROLE_NEW_USER, cleanName);
                                 postSuccess(callback, PROVIDER_EMAIL, cleanName, cleanEmail, user.getUid());
                             } else {
                                 Log.w(TAG, "Firebase register fallback: " + (task.getException() != null ? task.getException().getMessage() : "offline"));
                                 String uid = "email_" + Math.abs(cleanEmail.hashCode());
-                                saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, uid);
+                                saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, uid, ROLE_NEW_USER);
+                                configureUserWorkspace(context, ROLE_NEW_USER, cleanName);
                                 postSuccess(callback, PROVIDER_EMAIL, cleanName, cleanEmail, uid);
                             }
                         }
                     });
         } else {
             String uid = "email_" + Math.abs(cleanEmail.hashCode());
-            saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, uid);
+            saveAuthState(true, cleanName, cleanEmail, PROVIDER_EMAIL, uid, ROLE_NEW_USER);
+            configureUserWorkspace(context, ROLE_NEW_USER, cleanName);
             postSuccess(callback, PROVIDER_EMAIL, cleanName, cleanEmail, uid);
         }
     }
 
     public void signInAsDemoUser(String name, String email, String role, AuthCallback callback) {
         if (callback != null) callback.onProgress("Signing in as " + name + " (" + role + ")...");
-        String uid = "demo_" + role.toLowerCase().replace(" ", "_") + "_" + System.currentTimeMillis();
-        saveAuthState(true, name, email, role, uid);
+        String normalizedRole = ROLE_NEW_USER;
+        if (role != null) {
+            if (role.toUpperCase().contains("ADMIN")) normalizedRole = ROLE_ADMIN;
+            else if (role.toUpperCase().contains("ROOMMATE") || role.toUpperCase().contains("MESS")) normalizedRole = ROLE_ROOMMATE;
+            else normalizedRole = ROLE_NEW_USER;
+        }
+        String uid = "demo_" + normalizedRole.toLowerCase() + "_" + System.currentTimeMillis();
+        saveAuthState(true, name, email, role, uid, normalizedRole);
+        configureUserWorkspace(context, normalizedRole, name);
         postSuccess(callback, role, name, email, uid);
     }
 
@@ -517,6 +571,16 @@ public class FirebaseAuthManager {
     }
 
     private void saveAuthState(boolean isLoggedIn, String name, String email, String provider, String uid) {
+        String role = ROLE_NEW_USER;
+        if (email != null) {
+            String lower = email.toLowerCase();
+            if (lower.contains("evapodder") || lower.contains("admin")) role = ROLE_ADMIN;
+            else if (lower.contains("tanvir") || lower.contains("roommate") || lower.contains("mess")) role = ROLE_ROOMMATE;
+        }
+        saveAuthState(isLoggedIn, name, email, provider, uid, role);
+    }
+
+    private void saveAuthState(boolean isLoggedIn, String name, String email, String provider, String uid, String role) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit()
                 .putBoolean(KEY_IS_LOGGED_IN, isLoggedIn)
@@ -524,7 +588,137 @@ public class FirebaseAuthManager {
                 .putString(KEY_EMAIL, email)
                 .putString(KEY_PROVIDER, provider)
                 .putString(KEY_UID, uid)
+                .putString(KEY_ROLE, role)
                 .apply();
+    }
+
+    public static void configureUserWorkspace(Context context, String role, String name) {
+        try {
+            com.freshcheck.app.database.HouseholdRepository householdRepo = new com.freshcheck.app.database.HouseholdRepository(context);
+            com.freshcheck.app.database.FoodRepository foodRepo = new com.freshcheck.app.database.FoodRepository(context);
+
+            if (ROLE_ADMIN.equalsIgnoreCase(role)) {
+                householdRepo.setActiveHousehold("", "Personal & Admin Scope");
+            } else if (ROLE_ROOMMATE.equalsIgnoreCase(role)) {
+                com.freshcheck.app.model.HouseholdGroup group = householdRepo.ensureDemoMessGroup();
+                householdRepo.setActiveHousehold(group.getHouseholdId(), group.getName());
+                seedRoommateItemsIfEmpty(foodRepo, group.getHouseholdId());
+            } else {
+                householdRepo.setActiveHousehold("new_user_scope", "Personal Starter Pantry");
+                seedNewUserItemsIfEmpty(foodRepo, "new_user_scope");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed configuring workspace for role " + role + ": " + e.getMessage());
+        }
+    }
+
+    private static void seedRoommateItemsIfEmpty(com.freshcheck.app.database.FoodRepository repo, String householdId) {
+        try {
+            List<com.freshcheck.app.model.FoodItem> items = repo.getAllActive(householdId);
+            if (items.isEmpty()) {
+                com.freshcheck.app.model.FoodItem f1 = new com.freshcheck.app.model.FoodItem();
+                f1.setName("Hostel Cooking Oil 5L");
+                f1.setQuantity(5.0);
+                f1.setUnit("liters");
+                f1.setCategory("Others");
+                f1.setLocation("Pantry");
+                f1.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f1.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(30));
+                f1.setEstimatedCost(950.0);
+                f1.setNotes("Mess staple shared by 3 roommates");
+                f1.setHouseholdId(householdId);
+                repo.insert(f1);
+
+                com.freshcheck.app.model.FoodItem f2 = new com.freshcheck.app.model.FoodItem();
+                f2.setName("Mess Eggs Tray (30 pcs)");
+                f2.setQuantity(30.0);
+                f2.setUnit("items");
+                f2.setCategory("Dairy");
+                f2.setLocation("Refrigerator");
+                f2.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f2.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(10));
+                f2.setEstimatedCost(390.0);
+                f2.setNotes("Breakfast for all roommates");
+                f2.setHouseholdId(householdId);
+                repo.insert(f2);
+
+                com.freshcheck.app.model.FoodItem f3 = new com.freshcheck.app.model.FoodItem();
+                f3.setName("Miniket Rice (25kg Bag)");
+                f3.setQuantity(25.0);
+                f3.setUnit("kg");
+                f3.setCategory("Grains");
+                f3.setLocation("Pantry");
+                f3.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f3.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(90));
+                f3.setEstimatedCost(1850.0);
+                f3.setNotes("Monthly mess ration");
+                f3.setHouseholdId(householdId);
+                repo.insert(f3);
+
+                com.freshcheck.app.model.FoodItem f4 = new com.freshcheck.app.model.FoodItem();
+                f4.setName("Green Chillies & Ginger");
+                f4.setQuantity(400.0);
+                f4.setUnit("g");
+                f4.setCategory("Vegetables");
+                f4.setLocation("Refrigerator");
+                f4.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f4.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(2));
+                f4.setEstimatedCost(70.0);
+                f4.setNotes("Expiring in 2 days, use for dinner");
+                f4.setHouseholdId(householdId);
+                repo.insert(f4);
+
+                com.freshcheck.app.model.FoodItem f5 = new com.freshcheck.app.model.FoodItem();
+                f5.setName("Red Lentils / Masoor Dal");
+                f5.setQuantity(2.0);
+                f5.setUnit("kg");
+                f5.setCategory("Grains");
+                f5.setLocation("Pantry");
+                f5.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f5.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(45));
+                f5.setEstimatedCost(260.0);
+                f5.setNotes("Everyday cooking");
+                f5.setHouseholdId(householdId);
+                repo.insert(f5);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error seeding roommate items: " + e.getMessage());
+        }
+    }
+
+    private static void seedNewUserItemsIfEmpty(com.freshcheck.app.database.FoodRepository repo, String householdId) {
+        try {
+            List<com.freshcheck.app.model.FoodItem> items = repo.getAllActive(householdId);
+            if (items.isEmpty()) {
+                com.freshcheck.app.model.FoodItem f1 = new com.freshcheck.app.model.FoodItem();
+                f1.setName("Fresh Red Apples");
+                f1.setQuantity(1.0);
+                f1.setUnit("kg");
+                f1.setCategory("Fruits");
+                f1.setLocation("Refrigerator");
+                f1.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f1.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(7));
+                f1.setEstimatedCost(220.0);
+                f1.setNotes("Starter item: Healthy snack");
+                f1.setHouseholdId(householdId);
+                repo.insert(f1);
+
+                com.freshcheck.app.model.FoodItem f2 = new com.freshcheck.app.model.FoodItem();
+                f2.setName("Whole Wheat Bread");
+                f2.setQuantity(1.0);
+                f2.setUnit("items");
+                f2.setCategory("Bakery");
+                f2.setLocation("Pantry");
+                f2.setPurchaseDate(com.freshcheck.app.util.DateUtils.getTodayString());
+                f2.setExpiryDate(com.freshcheck.app.util.DateUtils.getFutureDateString(2));
+                f2.setEstimatedCost(90.0);
+                f2.setNotes("Starter item: Great for breakfast");
+                f2.setHouseholdId(householdId);
+                repo.insert(f2);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error seeding new user items: " + e.getMessage());
+        }
     }
 
     private void postSuccess(final AuthCallback callback, final String provider, final String name, final String email, final String uid) {
