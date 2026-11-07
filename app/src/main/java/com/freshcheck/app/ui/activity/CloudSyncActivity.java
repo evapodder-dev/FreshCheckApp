@@ -1,10 +1,13 @@
 package com.freshcheck.app.ui.activity;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.FoodRepository;
 import com.freshcheck.app.firebase.FirebaseAuthManager;
+import com.freshcheck.app.firebase.FirebaseConfigHelper;
 import com.freshcheck.app.firebase.FirebaseManager;
 import com.freshcheck.app.model.FoodItem;
 
@@ -84,6 +88,7 @@ public class CloudSyncActivity extends AppCompatActivity implements FirebaseMana
         });
 
         findViewById(R.id.btn_test_connection).setOnClickListener(v -> testCloudConnection());
+        findViewById(R.id.btn_setup_guide).setOnClickListener(v -> showFirebaseSetupDialog());
 
         // 1. Realtime DB actions
         findViewById(R.id.btn_upload_inventory).setOnClickListener(v -> uploadToRealtimeDatabase());
@@ -203,8 +208,79 @@ public class CloudSyncActivity extends AppCompatActivity implements FirebaseMana
 
         String lastError = firebaseManager.getLastSyncError();
         if (lastError != null && !lastError.isEmpty()) {
-            tvLog.setText("⚠️ " + lastError);
+            if (lastError.toLowerCase().contains("offline")) {
+                tvLog.setText("⚠️ Cloud Firestore Offline: Project currently uses placeholder demo credentials ('freshcheck-app-demo'). Tap 'Setup Guide' above to connect your live Firebase project.");
+            } else {
+                tvLog.setText("⚠️ " + lastError);
+            }
         }
+    }
+
+    private void showFirebaseSetupDialog() {
+        String currentProj = FirebaseConfigHelper.getProjectId(this);
+        String currentRtdb = FirebaseConfigHelper.getDatabaseUrl(this);
+
+        String message = "Why does Cloud Status show Offline / Syncing?\n\n"
+                + "The app currently has placeholder demo credentials in google-services.json:\n"
+                + "• Project ID: " + currentProj + "\n"
+                + "• RTDB URL: " + currentRtdb + "\n\n"
+                + "Since this demo project does not exist on Google Cloud, Google's servers reject the connection.\n\n"
+                + "To connect to your live Firebase backend:\n"
+                + "1. Go to console.firebase.google.com and create a project.\n"
+                + "2. Enable Realtime Database & Cloud Firestore (Test Mode).\n"
+                + "3. Add your SHA-1 fingerprint:\n"
+                + "6D:E1:68:7A:B1:81:79:EC:BB:1D:32:6A:BF:3A:2D:C2:D5:53:EE:7F\n"
+                + "4. Either paste your real google-services.json into the project, or tap 'Enter Live Project ID' below.";
+
+        new AlertDialog.Builder(this)
+                .setTitle("Firebase Cloud Setup")
+                .setMessage(message)
+                .setPositiveButton("Enter Live Project ID", (dialog, which) -> showCustomConfigDialog())
+                .setNegativeButton("OK", null)
+                .show();
+    }
+
+    private void showCustomConfigDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(48, 32, 48, 16);
+
+        TextView tvProjPrompt = new TextView(this);
+        tvProjPrompt.setText("Firebase Project ID (e.g. freshcheck-12345):");
+        tvProjPrompt.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        layout.addView(tvProjPrompt);
+
+        final EditText etProj = new EditText(this);
+        etProj.setText(FirebaseConfigHelper.getProjectId(this));
+        layout.addView(etProj);
+
+        TextView tvRtdbPrompt = new TextView(this);
+        tvRtdbPrompt.setText("Realtime Database URL:");
+        tvRtdbPrompt.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        tvRtdbPrompt.setPadding(0, 24, 0, 0);
+        layout.addView(tvRtdbPrompt);
+
+        final EditText etRtdb = new EditText(this);
+        etRtdb.setText(FirebaseConfigHelper.getDatabaseUrl(this));
+        layout.addView(etRtdb);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Configure Live Firebase")
+                .setView(layout)
+                .setPositiveButton("Save & Connect", (dialog, which) -> {
+                    String proj = etProj.getText().toString().trim();
+                    String rtdb = etRtdb.getText().toString().trim();
+                    if (!proj.isEmpty()) {
+                        FirebaseConfigHelper.setCustomProjectId(this, proj);
+                    }
+                    if (!rtdb.isEmpty()) {
+                        FirebaseConfigHelper.setCustomRealtimeDatabaseUrl(this, rtdb);
+                    }
+                    Toast.makeText(this, "Configuration updated! Pinging servers...", Toast.LENGTH_SHORT).show();
+                    testCloudConnection();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void testCloudConnection() {
