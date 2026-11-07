@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment;
 import com.freshcheck.app.R;
 import com.freshcheck.app.firebase.FirebaseAuthManager;
 import com.freshcheck.app.firebase.FirebaseManager;
+import com.freshcheck.app.ui.activity.CloudSyncActivity;
 import com.freshcheck.app.ui.activity.MainActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -227,6 +228,16 @@ public class AuthFragment extends Fragment {
             btnContinue.setOnClickListener(v -> {
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).onUserAuthenticated();
+                }
+            });
+        }
+
+        View btnOpenCloudSync = view.findViewById(R.id.btn_open_cloud_sync);
+        if (btnOpenCloudSync != null) {
+            btnOpenCloudSync.setOnClickListener(v -> {
+                if (getContext() != null) {
+                    Intent intent = new Intent(getContext(), CloudSyncActivity.class);
+                    startActivity(intent);
                 }
             });
         }

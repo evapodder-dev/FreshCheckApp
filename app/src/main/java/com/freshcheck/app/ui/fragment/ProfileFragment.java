@@ -173,12 +173,14 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        view.findViewById(R.id.card_nav_cloud_sync).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(getContext(), CloudSyncActivity.class));
-            }
-        });
+        View cardCloudSync = view.findViewById(R.id.card_nav_cloud_sync);
+        if (cardCloudSync != null) {
+            cardCloudSync.setOnClickListener(v -> {
+                if (getContext() != null) {
+                    startActivity(new Intent(getContext(), CloudSyncActivity.class));
+                }
+            });
+        }
 
         if (btnSignOut != null) {
             btnSignOut.setOnClickListener(new View.OnClickListener() {
