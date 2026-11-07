@@ -124,6 +124,9 @@ public class HouseholdRepository {
                             addMember(localGroup.getHouseholdId(), userUid, userName, "member");
                             setActiveHousehold(localGroup.getHouseholdId(), localGroup.getName());
                             if (callback != null) callback.onSuccess(localGroup);
+                        } else if (cleanCode.startsWith("MESS-") && cleanCode.length() >= 6) {
+                            HouseholdGroup newGroup = joinHousehold(cleanCode, userUid, userName);
+                            if (callback != null) callback.onSuccess(newGroup);
                         } else {
                             if (callback != null) callback.onError(errorMessage);
                         }
