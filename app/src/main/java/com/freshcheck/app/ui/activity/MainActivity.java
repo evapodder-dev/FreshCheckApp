@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -296,6 +297,17 @@ public class MainActivity extends AppCompatActivity {
             try {
                 unregisterReceiver(powerStateReceiver);
             } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FirebaseAuthManager.RC_SIGN_IN_GOOGLE) {
+            Fragment current = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+            if (current instanceof AuthFragment) {
+                ((AuthFragment) current).handleGoogleResult(resultCode, data);
+            }
         }
     }
 

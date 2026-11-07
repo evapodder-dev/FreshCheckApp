@@ -385,10 +385,20 @@ public class FirebaseAuthManager {
     // ================= GOOGLE AUTH =================
 
     public GoogleSignInClient getGoogleSignInClient(Activity activity) {
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-        return GoogleSignIn.getClient(activity, gso);
+        GoogleSignInOptions.Builder gsoBuilder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail();
+
+        try {
+            int resId = activity.getResources().getIdentifier("default_web_client_id", "string", activity.getPackageName());
+            if (resId != 0) {
+                String webClientId = activity.getString(resId);
+                if (webClientId != null && !webClientId.isEmpty() && !webClientId.startsWith("123456789012")) {
+                    gsoBuilder.requestIdToken(webClientId);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return GoogleSignIn.getClient(activity, gsoBuilder.build());
     }
 
     public void startGoogleSignIn(Activity activity) {
@@ -405,8 +415,7 @@ public class FirebaseAuthManager {
         if (callback != null) callback.onProgress("Processing Google sign-in response...");
 
         if (data == null) {
-            // Provide friendly demo fallback if user cancelled or Play Services failed
-            simulateSuccessfulSignIn(PROVIDER_GOOGLE, "Google User", "google.user@gmail.com", callback);
+            if (callback != null) callback.onError("No sign-in data received from Google Play Services.");
             return;
         }
 
@@ -414,7 +423,7 @@ public class FirebaseAuthManager {
         try {
             final GoogleSignInAccount account = task.getResult(ApiException.class);
             if (account == null) {
-                simulateSuccessfulSignIn(PROVIDER_GOOGLE, "Google User", "google.user@gmail.com", callback);
+                if (callback != null) callback.onError("Google account details were null.");
                 return;
             }
 
@@ -447,10 +456,14 @@ public class FirebaseAuthManager {
             }
         } catch (ApiException e) {
             Log.w(TAG, "Google sign in API notice: " + e.getStatusCode());
-            simulateSuccessfulSignIn(PROVIDER_GOOGLE, "Google User", "google.user@gmail.com", callback);
+            if (callback != null) {
+                callback.onError("Google Play Services notice (Code " + e.getStatusCode() + "). Debug SHA-1 needed in Firebase Console.");
+            }
         } catch (Exception e) {
             Log.w(TAG, "Google sign in exception, using safe fallback: " + e.getMessage());
-            simulateSuccessfulSignIn(PROVIDER_GOOGLE, "Google User", "google.user@gmail.com", callback);
+            if (callback != null) {
+                callback.onError(e.getMessage());
+            }
         }
     }
 
