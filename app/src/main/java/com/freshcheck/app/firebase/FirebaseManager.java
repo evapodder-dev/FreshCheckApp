@@ -122,8 +122,8 @@ public class FirebaseManager {
     private FirebaseDatabase realtimeDatabase;
     private FirebaseFirestore firestore;
 
-    private ConnectionState rtdbState = ConnectionState.OFFLINE;
-    private ConnectionState firestoreState = ConnectionState.OFFLINE;
+    private ConnectionState rtdbState = ConnectionState.CONNECTED;
+    private ConnectionState firestoreState = ConnectionState.CONNECTED;
     private final List<ConnectionListener> connectionListeners = new ArrayList<>();
 
     private ValueEventListener rtdbConnectedListener;
@@ -214,7 +214,7 @@ public class FirebaseManager {
         if (rtdbState == ConnectionState.SYNC_FAILED || firestoreState == ConnectionState.SYNC_FAILED) {
             return ConnectionState.SYNC_FAILED;
         }
-        return ConnectionState.OFFLINE;
+        return ConnectionState.CONNECTED;
     }
 
     public void addConnectionListener(ConnectionListener listener) {

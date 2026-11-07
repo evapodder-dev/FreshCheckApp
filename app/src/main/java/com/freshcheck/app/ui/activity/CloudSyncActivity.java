@@ -101,6 +101,7 @@ public class CloudSyncActivity extends AppCompatActivity implements FirebaseMana
         // 3. Sync All
         findViewById(R.id.btn_sync_all).setOnClickListener(v -> syncAllDatabases());
 
+        firebaseManager.saveLastSyncError("");
         updateUI();
     }
 
