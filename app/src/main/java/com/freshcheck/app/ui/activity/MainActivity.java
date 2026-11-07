@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -20,8 +21,10 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.freshcheck.app.R;
+import com.freshcheck.app.firebase.FirebaseAuthManager;
 import com.freshcheck.app.receiver.InventoryAuditReceiver;
 import com.freshcheck.app.service.InventoryAuditService;
+import com.freshcheck.app.ui.fragment.AuthFragment;
 import com.freshcheck.app.ui.fragment.DashboardFragment;
 import com.freshcheck.app.ui.fragment.InventoryFragment;
 import com.freshcheck.app.ui.fragment.RecipesFragment;
@@ -29,7 +32,6 @@ import com.freshcheck.app.ui.fragment.ShoppingFragment;
 import com.freshcheck.app.util.NotificationHelper;
 import com.freshcheck.app.util.WorkManagerScheduler;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationBarView;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity_Lifecycle";
@@ -42,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate() called");
+
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -68,8 +71,11 @@ public class MainActivity extends AppCompatActivity {
         // Handle navigation from notification extra if present
         handleNotificationIntent(getIntent());
 
-        // Default to Dashboard tab if first creation
-        if (savedInstanceState == null) {
+        // Auth Gate: Check if user is logged in
+        FirebaseAuthManager authManager = FirebaseAuthManager.getInstance(this);
+        if (!authManager.isUserLoggedIn()) {
+            showAuthScreen();
+        } else if (savedInstanceState == null) {
             loadFragment(new DashboardFragment());
         }
     }
@@ -156,8 +162,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_auth) {
-            Intent intent = new Intent(this, AuthActivity.class);
-            startActivity(intent);
+            showAuthScreen();
             return true;
         } else if (id == R.id.action_cloud_sync) {
             Intent intent = new Intent(this, CloudSyncActivity.class);
@@ -212,6 +217,51 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "onResume() called");
+
+        // Auth Gate: Ensure user is still logged in when activity is resumed
+        FirebaseAuthManager authManager = FirebaseAuthManager.getInstance(this);
+        if (!authManager.isUserLoggedIn()) {
+            showAuthScreen();
+        } else if (getSupportFragmentManager().findFragmentById(R.id.fragment_container) == null 
+                || getSupportFragmentManager().findFragmentById(R.id.fragment_container) instanceof AuthFragment) {
+            onUserAuthenticated();
+        }
+    }
+
+    public void onUserAuthenticated() {
+        if (bottomNav != null) {
+            bottomNav.setVisibility(View.VISIBLE);
+            bottomNav.setSelectedItemId(R.id.nav_dashboard);
+        }
+        View appBar = findViewById(R.id.app_bar_layout);
+        if (appBar != null) {
+            appBar.setVisibility(View.VISIBLE);
+        }
+        loadFragment(new DashboardFragment());
+    }
+
+    public void showAuthScreen() {
+        if (bottomNav != null) {
+            bottomNav.setVisibility(View.GONE);
+        }
+        View appBar = findViewById(R.id.app_bar_layout);
+        if (appBar != null) {
+            appBar.setVisibility(View.GONE);
+        }
+        loadFragment(new AuthFragment());
+    }
+
+    @Override
+    public void onBackPressed() {
+        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        if (currentFragment instanceof AuthFragment) {
+            FirebaseAuthManager authManager = FirebaseAuthManager.getInstance(this);
+            if (!authManager.isUserLoggedIn()) {
+                moveTaskToBack(true);
+                return;
+            }
+        }
+        super.onBackPressed();
     }
 
     @Override

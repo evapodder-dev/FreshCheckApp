@@ -22,6 +22,7 @@ import com.freshcheck.app.database.WasteRepository;
 import com.freshcheck.app.firebase.FirebaseAuthManager;
 import com.freshcheck.app.ui.activity.AnalyticsActivity;
 import com.freshcheck.app.ui.activity.AuthActivity;
+import com.freshcheck.app.ui.activity.MainActivity;
 import com.freshcheck.app.ui.activity.BudgetTrackerActivity;
 import com.freshcheck.app.ui.activity.CloudSyncActivity;
 import com.freshcheck.app.ui.activity.FoodScannerActivity;
@@ -72,12 +73,18 @@ public class ProfileFragment extends Fragment {
         btnSignIn = view.findViewById(R.id.btn_profile_sign_in);
         btnSignOut = view.findViewById(R.id.btn_profile_sign_out);
 
-        // Header click -> Open Auth
+        // Header click -> Open Auth Details
         if (cardProfileHeader != null) {
             cardProfileHeader.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startActivity(new Intent(getContext(), AuthActivity.class));
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).showAuthScreen();
+                    } else {
+                        Intent intent = new Intent(getContext(), AuthActivity.class);
+                        intent.putExtra("force_auth_view", true);
+                        startActivity(intent);
+                    }
                 }
             });
         }
@@ -87,7 +94,11 @@ public class ProfileFragment extends Fragment {
             btnSignIn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startActivity(new Intent(getContext(), AuthActivity.class));
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).showAuthScreen();
+                    } else {
+                        startActivity(new Intent(getContext(), AuthActivity.class));
+                    }
                 }
             });
         }
@@ -287,8 +298,16 @@ public class ProfileFragment extends Fragment {
                         authManager.signOut(requireContext(), new FirebaseAuthManager.SignOutCallback() {
                             @Override
                             public void onSignedOut() {
-                                Toast.makeText(getContext(), "Signed out successfully", Toast.LENGTH_SHORT).show();
-                                updateProfileUI();
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Signed out successfully", Toast.LENGTH_SHORT).show();
+                                    updateProfileUI();
+                                    if (getActivity() instanceof MainActivity) {
+                                        ((MainActivity) getActivity()).showAuthScreen();
+                                    } else {
+                                        Intent intent = new Intent(getContext(), AuthActivity.class);
+                                        startActivity(intent);
+                                    }
+                                }
                             }
                         });
                     }

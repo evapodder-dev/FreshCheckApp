@@ -2,6 +2,10 @@
 <resources>
     <!-- FreshCheck Base Application Theme (Light) -->
     <style name="Theme.FreshCheck" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Prevent Android 12+ starting window / splash leash freeze on emulators -->
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+
         <!-- Brand Color Palette -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_variant</item>
@@ -11,6 +15,7 @@
         <item name="colorOnSecondary">@color/text_on_primary</item>
 
         <!-- Background & Surface Hierarchy -->
+        <item name="android:windowBackground">@color/background</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/text_primary</item>

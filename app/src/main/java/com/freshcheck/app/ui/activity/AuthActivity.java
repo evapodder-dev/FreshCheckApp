@@ -46,22 +46,38 @@ public class AuthActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate() called");
+
+        authManager = FirebaseAuthManager.getInstance(this);
+        firebaseManager = FirebaseManager.getInstance(this);
+
+        // If user is already logged in, forward immediately to MainActivity
+        // (unless explicitly requested to view account details via extra)
+        boolean forceAuthView = getIntent().getBooleanExtra("force_auth_view", false);
+        if (!forceAuthView && authManager.isUserLoggedIn()) {
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+            finish();
+            overridePendingTransition(0, 0);
+            return;
+        }
+
         setContentView(R.layout.activity_auth);
 
         Toolbar toolbar = findViewById(R.id.toolbar_auth);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(forceAuthView && !isTaskRoot());
         }
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                if (authManager.isUserLoggedIn()) {
+                    finish();
+                } else {
+                    moveTaskToBack(true);
+                }
             }
         });
-
-        authManager = FirebaseAuthManager.getInstance(this);
-        firebaseManager = FirebaseManager.getInstance(this);
 
         initViews();
         setupListeners();
@@ -195,7 +211,18 @@ public class AuthActivity extends AppCompatActivity {
             }
         });
 
-        // 6. Jump to Cloud Sync Center
+        // 6. Continue to Dashboard
+        View btnContinue = findViewById(R.id.btn_continue_to_dashboard);
+        if (btnContinue != null) {
+            btnContinue.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
+
+        // 7. Jump to Cloud Sync Center
         findViewById(R.id.btn_open_cloud_sync).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -219,7 +246,7 @@ public class AuthActivity extends AppCompatActivity {
                 Toast.makeText(AuthActivity.this, "Welcome, " + name + "!", Toast.LENGTH_SHORT).show();
                 updateUI();
 
-                // Smoothly finish after brief confirmation so user returns to previous screen
+                // Smoothly finish and reveal MainActivity Dashboard
                 new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -227,7 +254,7 @@ public class AuthActivity extends AppCompatActivity {
                             finish();
                         }
                     }
-                }, 900);
+                }, 400);
             }
 
             @Override
@@ -325,5 +352,14 @@ public class AuthActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         updateUI();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!authManager.isUserLoggedIn()) {
+            moveTaskToBack(true);
+        } else {
+            super.onBackPressed();
+        }
     }
 }

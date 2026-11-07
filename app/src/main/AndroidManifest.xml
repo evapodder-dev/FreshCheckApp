@@ -41,7 +41,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Main Launcher Activity -->
+        <!-- Main Dashboard & Pantry Navigation Activity (Launcher) -->
         <activity
             android:name=".ui.activity.MainActivity"
             android:exported="true"
@@ -52,6 +52,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Authentication Gate & Profile Activity -->
+        <activity
+            android:name=".ui.activity.AuthActivity"
+            android:exported="true"
+            android:label="@string/title_auth"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- Add / Edit Food Activity -->
         <activity
@@ -113,11 +120,6 @@
         <activity
             android:name=".ui.activity.CloudSyncActivity"
             android:exported="false" />
-
-        <!-- Firebase Authentication Activity -->
-        <activity
-            android:name=".ui.activity.AuthActivity"
-            android:exported="true" />
 
         <!-- Started Service: Inventory Expiry Audit -->
         <service
