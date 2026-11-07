@@ -15,6 +15,7 @@ public class ShoppingItem implements Serializable {
     private double estimatedCost;
     private String notes;
     private String householdId;
+    private String firebaseId;
 
     public ShoppingItem() {
         this.quantity = 1.0;
@@ -76,6 +77,9 @@ public class ShoppingItem implements Serializable {
     public String getHouseholdId() { return householdId != null ? householdId : ""; }
     public void setHouseholdId(String householdId) { this.householdId = householdId; }
 
+    public String getFirebaseId() { return firebaseId != null ? firebaseId : ""; }
+    public void setFirebaseId(String firebaseId) { this.firebaseId = firebaseId; }
+
     public ContentValues toContentValues() {
         ContentValues values = new ContentValues();
         values.put("name", name);
@@ -99,6 +103,7 @@ public class ShoppingItem implements Serializable {
         map.put("estimatedCost", estimatedCost);
         map.put("notes", notes);
         map.put("householdId", householdId);
+        map.put("firebaseId", firebaseId != null ? firebaseId : "");
         return map;
     }
 }

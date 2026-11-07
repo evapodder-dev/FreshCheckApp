@@ -60,6 +60,15 @@ public class HouseholdRepository {
         // Set as active
         setActiveHousehold(householdId, name);
         Log.d(TAG, "Household created: " + name + " with code " + inviteCode);
+
+        // Synchronize mess and invite code to Firebase Cloud
+        try {
+            com.freshcheck.app.firebase.FirebaseManager.getInstance(context)
+                    .createMessInCloud(group, adminUid, adminName, null);
+        } catch (Exception e) {
+            Log.w(TAG, "Cloud mess sync note: " + e.getMessage());
+        }
+
         return group;
     }
 
@@ -88,6 +97,67 @@ public class HouseholdRepository {
         logActivity(group.getHouseholdId(), userUid, userName, "Joined the household");
         setActiveHousehold(group.getHouseholdId(), group.getName());
         return group;
+    }
+
+    public interface HouseholdJoinCallback {
+        void onSuccess(HouseholdGroup group);
+        void onError(String errorMessage);
+    }
+
+    public void joinHouseholdWithCloud(final String inviteCode, final String userUid,
+                                       final String userName, final HouseholdJoinCallback callback) {
+        final String cleanCode = inviteCode.trim().toUpperCase();
+
+        // Validate invite code against Firebase Cloud Realtime Database & Firestore
+        com.freshcheck.app.firebase.FirebaseManager.getInstance(context)
+                .joinMessInCloud(cleanCode, userUid, userName, new com.freshcheck.app.firebase.FirebaseManager.CloudJoinCallback() {
+                    @Override
+                    public void onSuccess(HouseholdGroup group) {
+                        if (callback != null) callback.onSuccess(group);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        // Check if invite code matches a locally stored household as offline fallback
+                        HouseholdGroup localGroup = findGroupByInviteCode(cleanCode);
+                        if (localGroup != null) {
+                            addMember(localGroup.getHouseholdId(), userUid, userName, "member");
+                            setActiveHousehold(localGroup.getHouseholdId(), localGroup.getName());
+                            if (callback != null) callback.onSuccess(localGroup);
+                        } else {
+                            if (callback != null) callback.onError(errorMessage);
+                        }
+                    }
+                });
+    }
+
+    public HouseholdGroup findGroupByInviteCode(String inviteCode) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(DatabaseHelper.TABLE_HOUSEHOLDS, null,
+                DatabaseHelper.COL_HOUSEHOLD_INVITE_CODE + " = ?",
+                new String[]{inviteCode.trim().toUpperCase()}, null, null, null);
+        HouseholdGroup group = null;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                group = cursorToGroup(cursor);
+            }
+            cursor.close();
+        }
+        return group;
+    }
+
+    public void insertGroupDirect(HouseholdGroup group) {
+        if (group == null) return;
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.insertWithOnConflict(DatabaseHelper.TABLE_HOUSEHOLDS, null,
+                group.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public void addMember(String householdId, String userUid, String userName, String role) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        HouseholdMember member = new HouseholdMember(0, householdId, userUid, userName, role, System.currentTimeMillis());
+        db.insertWithOnConflict(DatabaseHelper.TABLE_HOUSEHOLD_MEMBERS, null,
+                member.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     public List<HouseholdGroup> getAllHouseholds() {

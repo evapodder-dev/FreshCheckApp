@@ -13,10 +13,8 @@ public class FreshCheckApplication extends Application {
         super.onCreate();
         Log.d(TAG, "Application initializing...");
         try {
-            if (FirebaseApp.getApps(this).isEmpty()) {
-                FirebaseApp.initializeApp(this);
-                Log.d(TAG, "FirebaseApp initialized in Application");
-            }
+            com.freshcheck.app.firebase.FirebaseConfigHelper.initialize(this);
+            Log.d(TAG, "Firebase initialized via FirebaseConfigHelper");
         } catch (Exception e) {
             Log.w(TAG, "Firebase initialization handled safely: " + e.getMessage());
         }

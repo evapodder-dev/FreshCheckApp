@@ -131,6 +131,21 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
     public void onResume() {
         super.onResume();
         loadShoppingItems();
+
+        try {
+            String activeMessId = householdRepository.getActiveHouseholdId();
+            if (activeMessId != null && !activeMessId.isEmpty()) {
+                com.freshcheck.app.firebase.FirebaseManager.getInstance(requireContext())
+                        .attachSharedGroceryListener(activeMessId, new com.freshcheck.app.firebase.FirebaseManager.OnSharedGroceryChangeListener() {
+                            @Override
+                            public void onGroceryChanged() {
+                                loadShoppingItems();
+                            }
+                        });
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Shared grocery listener setup note: " + e.getMessage());
+        }
     }
 
     private void loadShoppingItems() {
@@ -167,6 +182,14 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
         ShoppingItem item = new ShoppingItem(0, name, qty, unit, cat, false, "");
         repository.insert(item);
 
+        // Sync to Firebase Cloud shared mess grocery list
+        try {
+            com.freshcheck.app.firebase.FirebaseManager.getInstance(requireContext())
+                    .syncSharedGroceryItem(item, null);
+        } catch (Exception e) {
+            Log.w(TAG, "Cloud grocery sync note: " + e.getMessage());
+        }
+
         etName.setText("");
         etQty.setText("1.0");
         Toast.makeText(getContext(), name + " added to list", Toast.LENGTH_SHORT).show();
@@ -194,6 +217,12 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
     @Override
     public void onTogglePurchased(ShoppingItem item, boolean isPurchased) {
         repository.togglePurchased(item.getId(), isPurchased);
+        try {
+            com.freshcheck.app.firebase.FirebaseManager.getInstance(requireContext())
+                    .updateSharedGroceryItemPurchased(item, isPurchased);
+        } catch (Exception e) {
+            Log.w(TAG, "Cloud grocery purchase status update note: " + e.getMessage());
+        }
         loadShoppingItems();
     }
 
@@ -312,6 +341,12 @@ public class ShoppingFragment extends Fragment implements ShoppingAdapter.OnShop
     @Override
     public void onDelete(ShoppingItem item) {
         repository.delete(item.getId());
+        try {
+            com.freshcheck.app.firebase.FirebaseManager.getInstance(requireContext())
+                    .deleteSharedGroceryItem(item);
+        } catch (Exception e) {
+            Log.w(TAG, "Cloud grocery deletion sync note: " + e.getMessage());
+        }
         loadShoppingItems();
     }
 }

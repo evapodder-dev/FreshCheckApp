@@ -99,10 +99,24 @@ public class FirebaseAuthManager {
 
     private void initAuth() {
         try {
+            FirebaseConfigHelper.initialize(context);
             if (!FirebaseApp.getApps(context).isEmpty()) {
                 mAuth = FirebaseAuth.getInstance();
                 isFirebaseReady = true;
                 Log.d(TAG, "FirebaseAuth initialized successfully");
+                
+                mAuth.addAuthStateListener(new FirebaseAuth.AuthStateListener() {
+                    @Override
+                    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        if (user != null) {
+                            Log.d(TAG, "FirebaseAuth listener: Active user UID=" + user.getUid());
+                            syncUserProfileToFirestore(user);
+                        } else {
+                            Log.d(TAG, "FirebaseAuth listener: No active FirebaseUser session");
+                        }
+                    }
+                });
             } else {
                 Log.i(TAG, "FirebaseApp not initialized yet. Operating in offline-safe mode.");
                 isFirebaseReady = false;
@@ -110,6 +124,25 @@ public class FirebaseAuthManager {
         } catch (Exception e) {
             Log.w(TAG, "FirebaseAuth initialization warning: " + e.getMessage());
             isFirebaseReady = false;
+        }
+    }
+
+    public void syncUserProfileToFirestore(FirebaseUser user) {
+        if (user == null) return;
+        try {
+            com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+            java.util.Map<String, Object> profile = new java.util.HashMap<>();
+            profile.put("uid", user.getUid());
+            profile.put("email", user.getEmail() != null ? user.getEmail() : "");
+            profile.put("displayName", user.getDisplayName() != null && !user.getDisplayName().isEmpty() ? user.getDisplayName() : getUserDisplayName());
+            profile.put("role", getUserRole());
+            profile.put("lastActive", System.currentTimeMillis());
+            db.collection("users").document(user.getUid())
+                    .set(profile, com.google.firebase.firestore.SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "User profile synced to Firestore: " + user.getUid()))
+                    .addOnFailureListener(e -> Log.w(TAG, "User profile sync note: " + e.getMessage()));
+        } catch (Exception e) {
+            Log.d(TAG, "Firestore user profile sync note: " + e.getMessage());
         }
     }
 

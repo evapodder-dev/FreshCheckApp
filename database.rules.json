@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "messes": {
+      "$messId": {
+        ".read": "auth != null && (data.child('members').child(auth.uid).exists() || !data.exists())",
+        ".write": "auth != null && (!data.exists() || data.child('members').child(auth.uid).exists() || newData.child('members').child(auth.uid).exists())",
+        "groceries": {
+          ".read": "auth != null && root.child('messes').child($messId).child('members').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('messes').child($messId).child('members').child(auth.uid).exists()"
+        },
+        "pantry": {
+          ".read": "auth != null && root.child('messes').child($messId).child('members').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('messes').child($messId).child('members').child(auth.uid).exists()"
+        }
+      }
+    },
+    "invite_codes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('adminUid').val() === auth.uid)"
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}

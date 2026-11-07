@@ -198,13 +198,24 @@ public class HouseholdActivity extends AppCompatActivity {
                     return;
                 }
 
-                HouseholdGroup group = householdRepository.joinHousehold(
+                Toast.makeText(HouseholdActivity.this, "Validating invite code in cloud...", Toast.LENGTH_SHORT).show();
+                householdRepository.joinHouseholdWithCloud(
                         code,
                         authManager.getUserId(),
-                        authManager.getUserDisplayName()
+                        authManager.getUserDisplayName(),
+                        new HouseholdRepository.HouseholdJoinCallback() {
+                            @Override
+                            public void onSuccess(HouseholdGroup group) {
+                                Toast.makeText(HouseholdActivity.this, "Joined: " + group.getName(), Toast.LENGTH_SHORT).show();
+                                updateUI();
+                            }
+
+                            @Override
+                            public void onError(String errorMessage) {
+                                Toast.makeText(HouseholdActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                            }
+                        }
                 );
-                Toast.makeText(HouseholdActivity.this, "Joined: " + group.getName(), Toast.LENGTH_SHORT).show();
-                updateUI();
             }
         });
         builder.setNegativeButton("Cancel", null);
