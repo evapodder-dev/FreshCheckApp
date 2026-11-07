@@ -349,7 +349,7 @@ public class ProfileFragment extends Fragment {
         if (getContext() == null) return;
         String[] options = {
                 "👑 Eva Podder (Admin) — Personal & Admin Scope",
-                "👥 Tanvir Ahmed (Roommate) — Room 304 Mess Scope",
+                "👥 Roommate — Room 304 Mess Scope",
                 "🌱 New User (Fresh Starter) — Starter Pantry Scope",
                 "🌐 Google / Other Account (Open Sign-In)"
         };
@@ -359,7 +359,7 @@ public class ProfileFragment extends Fragment {
                     if (which == 0) {
                         authManager.signInAsDemoUser("Eva Podder", "evapodder@freshcheck.app", FirebaseAuthManager.ROLE_ADMIN, createSwitchCallback("Eva Podder (Admin)"));
                     } else if (which == 1) {
-                        authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createSwitchCallback("Tanvir Ahmed (Roommate)"));
+                        authManager.signInAsDemoUser("Roommate", "roommate@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createSwitchCallback("Roommate"));
                     } else if (which == 2) {
                         authManager.signInAsDemoUser("New User", "newuser@freshcheck.app", FirebaseAuthManager.ROLE_NEW_USER, createSwitchCallback("New User (Fresh Starter)"));
                     } else {

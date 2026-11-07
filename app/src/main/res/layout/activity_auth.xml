@@ -307,7 +307,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
-                        android:text="👥 Sign In as Tanvir Ahmed (Roommate)"
+                        android:text="👥 Sign In as Roommate"
                         android:textColor="@color/primary"
                         android:textSize="13sp"
                         app:strokeColor="@color/primary"

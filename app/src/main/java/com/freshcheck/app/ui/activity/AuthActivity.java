@@ -133,7 +133,7 @@ public class AuthActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     showLoading("Signing in as Mess Roommate...");
-                    authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", "Mess Roommate", createAuthCallback("Mess Roommate"));
+                    authManager.signInAsDemoUser("Roommate", "roommate@freshcheck.app", "Roommate", createAuthCallback("Roommate"));
                 }
             });
         }

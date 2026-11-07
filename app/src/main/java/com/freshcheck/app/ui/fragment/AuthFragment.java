@@ -130,7 +130,7 @@ public class AuthFragment extends Fragment {
         if (btnDemoRoommate != null) {
             btnDemoRoommate.setOnClickListener(v -> {
                 showLoading("Signing in as Mess Roommate...");
-                authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createAuthCallback("Mess Roommate"));
+                authManager.signInAsDemoUser("Roommate", "roommate@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createAuthCallback("Roommate"));
             });
         }
 
