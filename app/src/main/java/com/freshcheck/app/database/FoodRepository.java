@@ -141,7 +141,12 @@ public class FoodRepository {
 
     public List<FoodItem> searchAndFilter(String query, String category, String statusFilter,
                                          String locationFilter, int sortMode) {
-        List<FoodItem> allActive = getAllActive();
+        return searchAndFilter(query, category, statusFilter, locationFilter, sortMode, null);
+    }
+
+    public List<FoodItem> searchAndFilter(String query, String category, String statusFilter,
+                                         String locationFilter, int sortMode, String householdId) {
+        List<FoodItem> allActive = getAllActive(householdId);
         List<FoodItem> filtered = new ArrayList<>();
 
         String q = query != null ? query.trim().toLowerCase() : "";

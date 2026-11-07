@@ -51,6 +51,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvScope;
     private View btnSignIn;
     private View btnSignOut;
+    private View btnSwitchRole;
     private View cardProfileHeader;
     private View cardRoleBanner;
     private TextView tvRoleBannerIcon;
@@ -77,26 +78,21 @@ public class ProfileFragment extends Fragment {
         cardProfileHeader = view.findViewById(R.id.card_profile_header);
         btnSignIn = view.findViewById(R.id.btn_profile_sign_in);
         btnSignOut = view.findViewById(R.id.btn_profile_sign_out);
+        btnSwitchRole = view.findViewById(R.id.btn_profile_switch_role);
         cardRoleBanner = view.findViewById(R.id.card_role_banner);
         tvRoleBannerIcon = view.findViewById(R.id.tv_role_banner_icon);
         tvRoleBannerTitle = view.findViewById(R.id.tv_role_banner_title);
         tvRoleBannerDesc = view.findViewById(R.id.tv_role_banner_desc);
         tvRoleBannerDetails = view.findViewById(R.id.tv_role_banner_details);
 
-        // Header click -> Open Auth Details
+        // Header click -> Switch Profile Dialog
         if (cardProfileHeader != null) {
-            cardProfileHeader.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (getActivity() instanceof MainActivity) {
-                        ((MainActivity) getActivity()).showAuthScreen();
-                    } else {
-                        Intent intent = new Intent(getContext(), AuthActivity.class);
-                        intent.putExtra("force_auth_view", true);
-                        startActivity(intent);
-                    }
-                }
-            });
+            cardProfileHeader.setOnClickListener(v -> showSwitchProfileDialog());
+        }
+
+        // Switch Profile Button
+        if (btnSwitchRole != null) {
+            btnSwitchRole.setOnClickListener(v -> showSwitchProfileDialog());
         }
 
         // Sign In button click -> Open Auth
@@ -208,9 +204,10 @@ public class ProfileFragment extends Fragment {
 
             tvUserName.setText(name);
             tvUserEmail.setText(email);
+            String provider = authManager.getUserProvider();
 
             if (FirebaseAuthManager.ROLE_ADMIN.equalsIgnoreCase(role)) {
-                tvProviderBadge.setText("🛡️ Household Admin & Pantry Owner");
+                tvProviderBadge.setText("👑 Household Admin & Pantry Owner");
                 tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
                 tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_fresh));
                 tvAvatar.setBackgroundResource(R.drawable.bg_avatar_circle);
@@ -219,11 +216,11 @@ public class ProfileFragment extends Fragment {
                     cardRoleBanner.setVisibility(View.VISIBLE);
                     if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("👑");
                     if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("Household Admin Control Center");
-                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Full administrative privileges for Eva's Pantry & Mess.");
-                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Full Pantry Control: Add, edit, or delete any household item\n• Invite Code Management: Generate & share codes (MESS-304)\n• Cloud Backup & Analytics: Realtime sync and full JSON/CSV export");
+                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Full administrative privileges for Eva's Pantry & Mess (Invite: MESS-PM27).");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Full Pantry Control: Add, edit, or delete any household item\n• Invite Code Management: Share code (MESS-PM27) with roommates\n• Cloud Backup & Analytics: Realtime sync and full JSON/CSV export\n• Food Saver Score: 95/100 (Expert Food Saver)");
                 }
             } else if (FirebaseAuthManager.ROLE_ROOMMATE.equalsIgnoreCase(role)) {
-                tvProviderBadge.setText("👥 Shared Mess Roommate");
+                tvProviderBadge.setText("👥 Shared Mess Roommate (Room 304)");
                 tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_expiring);
                 tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_expiring));
 
@@ -232,7 +229,19 @@ public class ProfileFragment extends Fragment {
                     if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("🤝");
                     if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("Roommate Mess Hub (Room 304)");
                     if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Active member of Room 304 Mess (Admin: Eva Podder).");
-                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Shared Inventory: Add groceries & track shared expiry dates\n• Consume & Cook: Mark shared groceries as consumed\n• Meal Planner: Collaborate on weekly hostel/mess meal schedules");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Shared Inventory: Add groceries & track shared expiry dates\n• Consume & Cook: Mark shared groceries as consumed\n• Meal Planner: Collaborate on weekly hostel/mess meal schedules\n• Food Saver Score: 82/100 (Eco Roommate)");
+                }
+            } else if (FirebaseAuthManager.PROVIDER_GOOGLE.equalsIgnoreCase(provider)) {
+                tvProviderBadge.setText("🌐 Google Cloud Identity");
+                tvProviderBadge.setBackgroundResource(R.drawable.bg_badge_fresh);
+                tvProviderBadge.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.primary));
+
+                if (cardRoleBanner != null) {
+                    cardRoleBanner.setVisibility(View.VISIBLE);
+                    if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("🌐");
+                    if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("Google Cloud Synchronized Identity");
+                    if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Linked with Google Account (" + email + ").");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("• Cloud Firestore & Realtime Database sync active\n• Multi-Device food inventory backup & cross-device sync\n• Food Saver Score: 88/100 (Cloud Pioneer)");
                 }
             } else {
                 tvProviderBadge.setText("🌱 Personal Food Saver (Starter)");
@@ -244,7 +253,7 @@ public class ProfileFragment extends Fragment {
                     if (tvRoleBannerIcon != null) tvRoleBannerIcon.setText("🌱");
                     if (tvRoleBannerTitle != null) tvRoleBannerTitle.setText("New User Quick Start Guide");
                     if (tvRoleBannerDesc != null) tvRoleBannerDesc.setText("Welcome to FreshCheck! Start building your smart pantry.");
-                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("1. Tap '+ Add' on Dashboard to log your first food item\n2. Use AI Camera Scanner to recognize fresh produce\n3. Join a roommate mess with an invite code or create your own");
+                    if (tvRoleBannerDetails != null) tvRoleBannerDetails.setText("1. Tap '+ Add' on Dashboard to log your first food item\n2. Use AI Camera Scanner to recognize fresh produce\n3. Join a roommate mess with an invite code or create your own\n• Food Saver Score: 50/100 (Starter)");
                 }
             }
 
@@ -261,6 +270,7 @@ public class ProfileFragment extends Fragment {
 
             if (btnSignIn != null) btnSignIn.setVisibility(View.GONE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
+            if (btnSwitchRole != null) btnSwitchRole.setVisibility(View.VISIBLE);
         } else {
             tvUserName.setText("Guest / Local User");
             tvUserEmail.setText("Tap to sign in or create an account");
@@ -272,6 +282,7 @@ public class ProfileFragment extends Fragment {
             if (cardRoleBanner != null) cardRoleBanner.setVisibility(View.GONE);
             if (btnSignIn != null) btnSignIn.setVisibility(View.VISIBLE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.GONE);
+            if (btnSwitchRole != null) btnSwitchRole.setVisibility(View.GONE);
         }
 
         String scopeName = householdRepo.getActiveHouseholdName();
@@ -332,6 +343,57 @@ public class ProfileFragment extends Fragment {
                     }
                 })
                 .show();
+    }
+
+    private void showSwitchProfileDialog() {
+        if (getContext() == null) return;
+        String[] options = {
+                "👑 Eva Podder (Admin) — Personal & Admin Scope",
+                "👥 Tanvir Ahmed (Roommate) — Room 304 Mess Scope",
+                "🌱 New User (Fresh Starter) — Starter Pantry Scope",
+                "🌐 Google / Other Account (Open Sign-In)"
+        };
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Switch Account Profile")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        authManager.signInAsDemoUser("Eva Podder", "evapodder@freshcheck.app", FirebaseAuthManager.ROLE_ADMIN, createSwitchCallback("Eva Podder (Admin)"));
+                    } else if (which == 1) {
+                        authManager.signInAsDemoUser("Tanvir Ahmed", "tanvir@freshcheck.app", FirebaseAuthManager.ROLE_ROOMMATE, createSwitchCallback("Tanvir Ahmed (Roommate)"));
+                    } else if (which == 2) {
+                        authManager.signInAsDemoUser("New User", "newuser@freshcheck.app", FirebaseAuthManager.ROLE_NEW_USER, createSwitchCallback("New User (Fresh Starter)"));
+                    } else {
+                        if (getActivity() instanceof MainActivity) {
+                            ((MainActivity) getActivity()).showAuthScreen();
+                        } else {
+                            startActivity(new Intent(getContext(), AuthActivity.class));
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private FirebaseAuthManager.AuthCallback createSwitchCallback(final String profileLabel) {
+        return new FirebaseAuthManager.AuthCallback() {
+            @Override
+            public void onProgress(String message) {}
+
+            @Override
+            public void onSuccess(String provider, String name, String email, String uid) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Switched profile to " + profileLabel, Toast.LENGTH_SHORT).show();
+                }
+                updateProfileUI();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
     }
 
     private void confirmSignOut() {

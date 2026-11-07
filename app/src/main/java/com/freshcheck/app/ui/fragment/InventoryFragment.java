@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.freshcheck.app.R;
 import com.freshcheck.app.database.FoodRepository;
+import com.freshcheck.app.database.HouseholdRepository;
 import com.freshcheck.app.database.WasteRepository;
 import com.freshcheck.app.model.CategoryConstants;
 import com.freshcheck.app.model.FoodItem;
@@ -229,7 +230,8 @@ public class InventoryFragment extends Fragment implements FoodAdapter.OnFoodIte
     private void applyFilters() {
         Log.d(TAG, "Filtering: Query='" + currentSearch + "', Category=" + currentCategory
                 + ", Location=" + currentLocation + ", Status=" + currentStatus + ", Sort=" + currentSortMode);
-        List<FoodItem> filtered = repository.searchAndFilter(currentSearch, currentCategory, currentStatus, currentLocation, currentSortMode);
+        String activeHouseholdId = new HouseholdRepository(requireContext()).getActiveHouseholdId();
+        List<FoodItem> filtered = repository.searchAndFilter(currentSearch, currentCategory, currentStatus, currentLocation, currentSortMode, activeHouseholdId);
         adapter.setItems(filtered);
 
         tvCount.setText(String.format(Locale.US, "Showing %d item%s", filtered.size(), filtered.size() == 1 ? "" : "s"));

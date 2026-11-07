@@ -773,13 +773,28 @@
             app:iconTint="@color/text_on_primary"
             app:cornerRadius="12dp" />
 
+        <!-- Switch Profile / Account Button (Shown when user is signed in) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_profile_switch_role"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="20dp"
+            android:text="Switch Profile / Account"
+            android:textColor="@color/primary"
+            app:strokeColor="@color/primary"
+            app:strokeWidth="1dp"
+            app:icon="@drawable/ic_account"
+            app:iconTint="@color/primary"
+            app:cornerRadius="12dp" />
+
         <!-- Sign Out Button (Shown when user is signed in) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_profile_sign_out"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="12dp"
             android:layout_marginBottom="32dp"
             android:text="Sign Out"
             android:textColor="@color/status_expired"

@@ -219,6 +219,10 @@ public class FirebaseAuthManager {
         return prefs.getString(KEY_PROVIDER, PROVIDER_NONE);
     }
 
+    public String getUserProvider() {
+        return getAuthProvider();
+    }
+
     public String getUserRole() {
         if (!isUserLoggedIn()) {
             return ROLE_NEW_USER;
@@ -636,6 +640,10 @@ public class FirebaseAuthManager {
                 .putString(KEY_UID, uid)
                 .putString(KEY_ROLE, role)
                 .apply();
+
+        if (isLoggedIn) {
+            configureUserWorkspace(context, role, name);
+        }
     }
 
     public static void configureUserWorkspace(Context context, String role, String name) {
