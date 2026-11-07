@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 public class InventoryAuditService extends Service {
     private static final String TAG = "InventoryAuditService";
     public static final String ACTION_AUDIT_COMPLETE = "com.freshcheck.app.ACTION_INVENTORY_AUDIT_COMPLETE";
+    public static final String ACTION_START_FOREGROUND = "com.freshcheck.app.ACTION_START_FOREGROUND";
     public static final String EXTRA_EXPIRING_COUNT = "expiring_count";
     public static final String EXTRA_EXPIRED_COUNT = "expired_count";
     public static final String EXTRA_TOTAL_COUNT = "total_count";
@@ -41,6 +42,11 @@ public class InventoryAuditService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "InventoryAuditService onStartCommand() started with startId: " + startId);
+
+        if (intent != null && ACTION_START_FOREGROUND.equals(intent.getAction())) {
+            startForeground(NotificationHelper.NOTIFICATION_ID_AUDIT,
+                    NotificationHelper.buildForegroundServiceNotification(this, "Active pantry audit running in foreground..."));
+        }
 
         executorService.execute(new Runnable() {
             @Override
@@ -93,6 +99,9 @@ public class InventoryAuditService extends Service {
                 } catch (Exception e) {
                     Log.e(TAG, "Error during inventory audit", e);
                 } finally {
+                    try {
+                        stopForeground(true);
+                    } catch (Exception ignored) {}
                     stopSelf(startId);
                 }
             }

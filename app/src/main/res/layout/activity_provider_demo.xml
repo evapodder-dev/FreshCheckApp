@@ -104,6 +104,18 @@
                 app:strokeColor="@color/primary" />
         </LinearLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_query_mediastore"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="8dp"
+            android:text="📁 Query Shared Device Media (MediaStore via ContentResolver)"
+            android:textColor="@color/primary"
+            android:textSize="11sp"
+            app:cornerRadius="8dp"
+            app:strokeColor="@color/primary" />
+
         <!-- Cursor Results Console Output Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

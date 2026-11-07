@@ -96,4 +96,22 @@ public final class NotificationHelper {
         }
         return true;
     }
+
+    public static android.app.Notification buildForegroundServiceNotification(Context context, String contentText) {
+        createNotificationChannel(context);
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+        );
+
+        return new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_database)
+                .setContentTitle("FreshCheck Inventory Audit Service")
+                .setContentText(contentText != null ? contentText : "Auditing local pantry database & freshness...")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .build();
+    }
 }

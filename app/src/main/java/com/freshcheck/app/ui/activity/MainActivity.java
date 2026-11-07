@@ -23,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import com.freshcheck.app.R;
 import com.freshcheck.app.firebase.FirebaseAuthManager;
 import com.freshcheck.app.receiver.InventoryAuditReceiver;
+import com.freshcheck.app.receiver.PowerStateReceiver;
 import com.freshcheck.app.service.InventoryAuditService;
 import com.freshcheck.app.ui.fragment.AuthFragment;
 import com.freshcheck.app.ui.fragment.DashboardFragment;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
     private InventoryAuditReceiver auditReceiver;
+    private PowerStateReceiver powerStateReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,6 +214,16 @@ public class MainActivity extends AppCompatActivity {
         auditReceiver = new InventoryAuditReceiver();
         IntentFilter filter = new IntentFilter(InventoryAuditService.ACTION_AUDIT_COMPLETE);
         ContextCompat.registerReceiver(this, auditReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
+
+        // Register system broadcast receiver for battery, power, and airplane mode transitions
+        powerStateReceiver = new PowerStateReceiver();
+        IntentFilter powerFilter = new IntentFilter();
+        powerFilter.addAction(Intent.ACTION_BATTERY_LOW);
+        powerFilter.addAction(Intent.ACTION_BATTERY_OKAY);
+        powerFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+        powerFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        powerFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        ContextCompat.registerReceiver(this, powerStateReceiver, powerFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
@@ -278,6 +290,11 @@ public class MainActivity extends AppCompatActivity {
         if (auditReceiver != null) {
             try {
                 unregisterReceiver(auditReceiver);
+            } catch (Exception ignored) {}
+        }
+        if (powerStateReceiver != null) {
+            try {
+                unregisterReceiver(powerStateReceiver);
             } catch (Exception ignored) {}
         }
     }
