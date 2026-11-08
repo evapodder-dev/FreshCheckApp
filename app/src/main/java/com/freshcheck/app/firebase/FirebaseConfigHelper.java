@@ -86,7 +86,7 @@ public class FirebaseConfigHelper {
         try {
             return context.getString(R.string.google_app_id);
         } catch (Exception e) {
-            return "1:123456789012:android:abcdef0123456789";
+            return "1:191913515241:android:3bd25badb292b286ab3878";
         }
     }
 
@@ -94,7 +94,7 @@ public class FirebaseConfigHelper {
         try {
             return context.getString(R.string.google_api_key);
         } catch (Exception e) {
-            return "AIzaSyDemoKeyReplaceWithYourOwnFirebaseKey";
+            return "AIzaSyAPBSCN6wi7VQRkRclJAS8Q32Bsjl4_07s";
         }
     }
 
@@ -107,7 +107,7 @@ public class FirebaseConfigHelper {
         try {
             return context.getString(R.string.project_id);
         } catch (Exception e) {
-            return "freshcheck-app-demo";
+            return "freshcheck-25037";
         }
     }
 
@@ -129,7 +129,7 @@ public class FirebaseConfigHelper {
         try {
             return context.getString(R.string.google_storage_bucket);
         } catch (Exception e) {
-            return getProjectId(context) + ".appspot.com";
+            return "freshcheck-25037.firebasestorage.app";
         }
     }
 
@@ -137,7 +137,7 @@ public class FirebaseConfigHelper {
         try {
             return context.getString(R.string.gcm_defaultSenderId);
         } catch (Exception e) {
-            return "123456789012";
+            return "191913515241";
         }
     }
 

@@ -1,26 +1,37 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "freshcheck-app-demo",
-    "storage_bucket": "freshcheck-app-demo.appspot.com"
+    "project_number": "191913515241",
+    "project_id": "freshcheck-25037",
+    "storage_bucket": "freshcheck-25037.firebasestorage.app",
+    "firebase_url": "https://freshcheck-25037-default-rtdb.firebaseio.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef0123456789",
+        "mobilesdk_app_id": "1:191913515241:android:3bd25badb292b286ab3878",
         "android_client_info": {
           "package_name": "com.freshcheck.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "191913515241-2o6mdbrmc5ct0cmnhh9gr35v3118b92j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDemoKeyReplaceWithYourOwnFirebaseKey"
+          "current_key": "AIzaSyAPBSCN6wi7VQRkRclJAS8Q32Bsjl4_07s"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "191913515241-2o6mdbrmc5ct0cmnhh9gr35v3118b92j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
